@@ -4,7 +4,7 @@ export const API = axios.create({
   // baseURL: "http://localhost:8080/api",
 
   // baseURL: "https://ind-stocks-1.onrender.com/api",
-  baseURL: 'https://ease-27am.onrender.com',
+  baseURL: 'https://ease-27am.onrender.com/api',
   withCredentials: true, // send cookies
 });
 
