@@ -147,7 +147,7 @@ export default function AuthForm({ onSignup, onLogin, error }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isLogin) {
-      // ✅ Send identifier instead of username
+
       onLogin({ identifier: formData.username, password: formData.password });
     } else {
       onSignup(formData);
@@ -209,7 +209,7 @@ export default function AuthForm({ onSignup, onLogin, error }) {
           />
         </InputGroup>
 
-        <SubmitButton type="submit">  {/* ✅ Changed to type="submit" */}
+        <SubmitButton type="submit">  
           {isLogin ? "Login" : "Create Account"}
         </SubmitButton>
       </FormWrapper>

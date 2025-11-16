@@ -174,8 +174,8 @@ export default function FoodifyAuth() {
     <Container>
       <Card>
         <Logo>
-          <Title>Smart Strategy Backtester</Title>
-          <Subtitle>Analyze Charts, See Strategy Matrix</Subtitle>
+          <Title>Ease</Title>
+          <Subtitle>Manage Your Money</Subtitle>
         </Logo>
 
         {!user ? (
