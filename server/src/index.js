@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    //  origin: ["http://localhost:5174", process.env.FRONTEND_URL],
+    //  origin: ["http://localhost:5173", process.env.FRONTEND_URL],
     origin: [
       "https://ease-kappa.vercel.app/",
       "http://localhost:5174",
