@@ -216,7 +216,7 @@ export default function AuthForm({ onSignup, onLogin, error }) {
 
       <HelperText>
         {isLogin
-          ? "New to Foodify? Click Sign Up above"
+          ? "New to Ease? Click Sign Up above"
           : "Already have an account? Click Login above"}
       </HelperText>
     </FormContainer>
