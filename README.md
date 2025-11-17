@@ -78,7 +78,7 @@ Managing personal loans and debts among friends, family, or acquaintances often 
 | Backend      | Node.js, Express.js                                    |
 | Database     | PostgreSQL                                             |
 | Authentication | JWT (JSON Web Token)                                 |
-| Hosting      | Vercel (Frontend), Render (Backend), ElephantSQL (DB) |
+| Hosting      | Vercel (Frontend), Render (Backend), Neon (DB) |
 
 ---
 
