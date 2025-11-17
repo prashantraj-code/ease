@@ -22,8 +22,8 @@ Managing personal loans and debts among friends, family, or acquaintances often 
 - **Database:** PostgreSQL  
 - **Authentication:** JWT-based login/signup  
 - **Hosting:**  
-  - Frontend → Vercel  
-  - Backend → Render  
+  - Frontend → Vercel {https://ease-kappa.vercel.app/}
+  - Backend → Render {https://ease-27am.onrender.com}
   - Database → Neon  
 
 ---
