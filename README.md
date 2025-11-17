@@ -1,61 +1,106 @@
-# 1. Project Title
-Ease – Personal Loan & Debt Tracker
+# Ease – Personal Loan & Debt Tracker
 
-# 2. Problem Statement
-Keeping track of money lent to or borrowed from friends, family, or acquaintances is often
-messy. People forget amounts, due dates, or repayments, leading to misunderstandings.
-Ease helps users efficiently track money lent or borrowed, view outstanding balances, and
-get reminders for repayments.
+## 1. Project Title
+**Ease – Personal Loan & Debt Tracker**
 
-# 3. System Architecture
-Frontend → Backend (API) → Database
+---
 
-Example stack:
-●
-Frontend: React.js with React Router
-●
-Backend: Node.js + Express
-●
-Database: PostgreSQL
-●
-Authentication: JWT-based login/signup
-●
-Hosting:
-○
-Frontend → Vercel
-○
-○
-Backend → Render
-Database → ElephantSQL
-# 5. Key Features
-Authentication &
-Authorization
-Category Features
-User registration, login, logout, role-based access
-(user/admin)
-CRUD Operations Add, view, update, delete loan/debt entries
-Loan/Debt Tracking Due Date & Notifications Balance Summary Reports & Analytics Track money lent to others and borrowed from others
-Set repayment due dates and get reminders
-See net balance (total lent – total borrowed)
-Monthly or custom period summaries of outstanding
-loans/debts
-# 6. Tech Stack
-Layer Technologies
-Frontend React.js, React Router, Axios, TailwindCSS
-Backend Node.js, Express.js
-Database PostgreSQL
-Authentication JWT
-Hosting Vercel (Frontend), Render (Backend), ElephantSQL
-(Database)
-# 7. API Overview
-Endpoint Method Description Access
-/api/auth/signup POST Register new user Public
-/api/auth/login POST Authenticate user Public
-/api/transactions GET Get all loans/debts for user Authenticated
-/api/transactions POST Add new loan/debt Authenticated
-/api/transactions/:id PUT Update transaction Authenticated
-/api/transactions/:id DELETE Delete transaction Authenticated
-/api/reports/summary GET Get summary of lent vs borrowed Authenticated
-/api/notifications GET Get upcoming repayment
-reminders
-Authenticated
+## 2. Problem Statement
+Managing personal loans and debts among friends, family, or acquaintances often becomes confusing. People tend to forget repayment dates, outstanding balances, and amounts lent or borrowed, leading to financial miscommunication.
+
+**Ease** solves this by providing a secure, organized, and user-friendly platform to track transactions, set reminders, and manage repayment schedules efficiently.
+
+---
+
+## 3. System Architecture
+
+**Frontend → Backend (API) → Database**
+
+**Example Stack**
+- **Frontend:** React.js, React Router, Axios, TailwindCSS  
+- **Backend:** Node.js + Express.js  
+- **Database:** PostgreSQL  
+- **Authentication:** JWT-based login/signup  
+- **Hosting:**  
+  - Frontend → Vercel  
+  - Backend → Render  
+  - Database → ElephantSQL  
+
+---
+
+## 4. Key Features
+
+### **Authentication & Authorization**
+- Secure JWT-based login/signup  
+- Role-based access (user/admin)
+
+### **CRUD Operations**
+- Add, view, update, and delete loan/debt entries
+
+### **Loan/Debt Tracking**
+- Track money lent or borrowed with clear status indicators
+
+### **Due Dates & Notifications**
+- Set repayment due dates  
+- Receive reminders and alerts
+
+### **Balance Summary**
+- Auto-calculate total lent − total borrowed
+
+### **Reports & Analytics**
+- Generate monthly or custom-period reports  
+- Visual charts and analytics
+
+### **Search Functionality**
+- Search by person, amount, date, or status
+
+### **Sorting Options**
+- Sort by date, amount, or due date (asc/desc)
+
+### **Filtering Tools**
+- Filter by type (lent/borrowed)  
+- Filter by paid/unpaid status  
+- Filter by custom time periods
+
+### **Pagination**
+- Paginated transaction lists for better performance
+
+### **Data Export**
+- Export data as CSV or PDF
+
+---
+
+## 5. Tech Stack
+
+| Layer        | Technologies                                           |
+|--------------|---------------------------------------------------------|
+| Frontend     | React.js, React Router, Axios, TailwindCSS             |
+| Backend      | Node.js, Express.js                                    |
+| Database     | PostgreSQL                                             |
+| Authentication | JWT (JSON Web Token)                                 |
+| Hosting      | Vercel (Frontend), Render (Backend), ElephantSQL (DB) |
+
+---
+
+## 6. API Overview
+
+| Endpoint | Method | Description | Access |
+|----------|--------|-------------|--------|
+| `/api/auth/signup` | POST | Register a new user | Public |
+| `/api/auth/login` | POST | Authenticate a user | Public |
+| `/api/transactions` | GET | Get all loans/debts (search, sort, filter, pagination) | Authenticated |
+| `/api/transactions` | POST | Add new loan/debt transaction | Authenticated |
+| `/api/transactions/:id` | PUT | Update a transaction | Authenticated |
+| `/api/transactions/:id` | DELETE | Delete a transaction | Authenticated |
+| `/api/reports/summary` | GET | Summary of lent vs borrowed | Authenticated |
+| `/api/notifications` | GET | Upcoming repayment reminders | Authenticated |
+
+---
+
+## Index
+1. Project Title  
+2. Problem Statement  
+3. System Architecture  
+4. Key Features  
+5. Tech Stack  
+6. API Overview
