@@ -24,7 +24,7 @@ Managing personal loans and debts among friends, family, or acquaintances often 
 - **Hosting:**  
   - Frontend → Vercel  
   - Backend → Render  
-  - Database → ElephantSQL  
+  - Database → Neon  
 
 ---
 
