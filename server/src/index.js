@@ -2,9 +2,12 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import 'dotenv/config';
+import "dotenv/config";
 import helmet from "helmet";
 import authRoutes from "./routes/auth.js";
+import transactionRoutes from "./routes/transactions.js";
+import reportRoutes from "./routes/reports.js";
+import notificationRoutes from "./routes/notifications.js";
 
 dotenv.config();
 
@@ -28,6 +31,9 @@ app.use(
 );
 
 app.use("/api/auth", authRoutes);
+app.use("/api/transactions", transactionRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend running ✅");

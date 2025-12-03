@@ -17,24 +17,25 @@ const TabContainer = styled.div`
 const Tab = styled.button`
   flex: 1;
   padding: 12px;
-  background: ${props => props.active ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'transparent'};
-  color: ${props => props.active ? 'white' : '#6b7280'};
+  background: ${(props) => (props.active ? "#10b981" : "transparent")};
+  color: ${(props) => (props.active ? "white" : "#6b7280")};
   border: none;
   border-radius: 10px;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: ${props => props.active ? '0 4px 12px rgba(102, 126, 234, 0.3)' : 'none'};
+  transition: all 0.2s ease;
+  box-shadow: ${(props) =>
+    props.active ? "0 2px 8px rgba(16, 185, 129, 0.3)" : "none"};
+  font-family: "Futura", sans-serif;
 
   &:hover {
-    background: ${props => props.active
-      ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-      : '#e5e7eb'};
+    background: ${(props) => (props.active ? "#059669" : "#e5e7eb")};
   }
 `;
 
-const FormWrapper = styled.form`  // ✅ Changed to form
+const FormWrapper = styled.form`
+  // ✅ Changed to form
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -50,44 +51,58 @@ const Label = styled.label`
   font-size: 14px;
   font-weight: 600;
   color: #374151;
+  font-family: "Futura", sans-serif;
 `;
 
 const Input = styled.input`
   padding: 14px 16px;
-  border: 2px solid #e5e7eb;
+  border: 1px solid #e5e7eb;
   border-radius: 10px;
   font-size: 15px;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   outline: none;
-  font-family: inherit;
+  font-family: "Futura", sans-serif;
+  background: white !important;
+  color: #1f2937 !important;
 
   &:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    background: white !important;
   }
 
   &::placeholder {
     color: #9ca3af;
+  }
+
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+    -webkit-text-fill-color: #1f2937 !important;
+    border-color: #e5e7eb;
   }
 `;
 
 const SubmitButton = styled.button`
   width: 100%;
   padding: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #10b981;
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
   margin-top: 8px;
+  font-family: "Futura", sans-serif;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
   }
 
   &:active {
@@ -114,9 +129,16 @@ const ErrorMessage = styled.div`
   animation: shake 0.4s ease;
 
   @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-8px); }
-    75% { transform: translateX(8px); }
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(-8px);
+    }
+    75% {
+      transform: translateX(8px);
+    }
   }
 
   &:before {
@@ -130,6 +152,7 @@ const HelperText = styled.p`
   font-size: 13px;
   color: #6b7280;
   margin-top: 16px;
+  font-family: "Futura", sans-serif;
 `;
 
 export default function AuthForm({ onSignup, onLogin, error }) {
@@ -147,7 +170,6 @@ export default function AuthForm({ onSignup, onLogin, error }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isLogin) {
-
       onLogin({ identifier: formData.username, password: formData.password });
     } else {
       onSignup(formData);
@@ -209,7 +231,7 @@ export default function AuthForm({ onSignup, onLogin, error }) {
           />
         </InputGroup>
 
-        <SubmitButton type="submit">  
+        <SubmitButton type="submit">
           {isLogin ? "Login" : "Create Account"}
         </SubmitButton>
       </FormWrapper>

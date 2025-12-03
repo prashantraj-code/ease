@@ -1,26 +1,138 @@
 import { useEffect, useState } from "react";
-import styled from "styled-components";
+import styled, { createGlobalStyle } from "styled-components";
 import AuthForm from "./components/AuthForm";
+import Dashboard from "./components/Dashboard2";
 import { signup, login, getUser, logout } from "./api";
+
+const GlobalStyle = createGlobalStyle`
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Futura', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+`;
 
 const Container = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #f9fafb;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 40px;
+  gap: 60px;
+  overflow: hidden;
+
+  @media (max-width: 968px) {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+`;
+
+const LeftSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 32px;
+  padding: 40px;
+  animation: fadeInLeft 0.6s ease-out;
+
+  @keyframes fadeInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @media (max-width: 968px) {
+    display: none;
+  }
+`;
+
+const HeroTitle = styled.h2`
+  font-size: 48px;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0;
+  line-height: 1.2;
+  font-family: "Futura", sans-serif;
+
+  span {
+    color: #10b981;
+  }
+`;
+
+const HeroSubtitle = styled.p`
+  font-size: 18px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.6;
+  font-family: "Futura", sans-serif;
+`;
+
+const FeatureList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const FeatureItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+const FeatureIcon = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: ${(props) => props.bgColor || "#10b981"};
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 24px;
+  flex-shrink: 0;
+`;
+
+const FeatureText = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const FeatureTitle = styled.h3`
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+  font-family: "Futura", sans-serif;
+`;
+
+const FeatureDescription = styled.p`
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  font-family: "Futura", sans-serif;
 `;
 
 const Card = styled.div`
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 24px;
+  background: white;
+  border-radius: 16px;
   padding: 48px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-width: 440px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  max-width: 480px;
   width: 100%;
+  justify-self: center;
   animation: slideUp 0.5s ease-out;
 
   @keyframes slideUp {
@@ -33,6 +145,10 @@ const Card = styled.div`
       transform: translateY(0);
     }
   }
+
+  @media (max-width: 968px) {
+    max-width: 440px;
+  }
 `;
 
 const Logo = styled.div`
@@ -43,10 +159,9 @@ const Logo = styled.div`
 const Title = styled.h1`
   font-size: 42px;
   font-weight: 800;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #10b981;
   margin: 0 0 8px 0;
+  font-family: "Futura", sans-serif;
 `;
 
 const Subtitle = styled.p`
@@ -54,63 +169,12 @@ const Subtitle = styled.p`
   font-size: 15px;
   margin: 0;
   font-weight: 500;
+  font-family: "Futura", sans-serif;
 `;
 
-const UserSection = styled.div`
-  text-align: center;
-`;
-
-const WelcomeText = styled.p`
-  font-size: 18px;
-  color: #374151;
-  margin-bottom: 24px;
-  
-  strong {
-    color: #667eea;
-    font-weight: 700;
-  }
-`;
-
-const LogoutButton = styled.button`
-  width: 100%;
-  padding: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-`;
-
-const UserIcon = styled.div`
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50%;
-  margin: 0 auto 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 36px;
-  color: white;
-  font-weight: 700;
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-`;
-
-export default function FoodifyAuth() {
+export default function App() {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   // Check if user is already logged in on page load
@@ -121,6 +185,8 @@ export default function FoodifyAuth() {
         setUser(res.data.user);
       } catch {
         setUser(null);
+      } finally {
+        setLoading(false);
       }
     }
     fetchUser();
@@ -129,16 +195,16 @@ export default function FoodifyAuth() {
   const handleSignup = async (data) => {
     try {
       setError("");
-      const res = await signup(data); 
+      const res = await signup(data);
       setUser(res.data.user);
-      alert(`Authenticated.. Username as ${res.data.user.username}`);
     } catch (err) {
       if (err.response?.status === 409) {
-      
         try {
-          const loginRes = await login({ identifier: data.email, password: data.password });
+          const loginRes = await login({
+            identifier: data.email,
+            password: data.password,
+          });
           setUser(loginRes.data.user);
-          alert(`Authenticated.. Username as ${loginRes.data.user.username}`);
         } catch {
           setError("User already exists but login failed.");
         }
@@ -153,7 +219,6 @@ export default function FoodifyAuth() {
       setError("");
       const res = await login(data);
       setUser(res.data.user);
-      alert(`Authenticated.. Username as ${res.data.user.username}`);
     } catch (err) {
       setError(err.response?.data?.message || "Invalid credentials.");
     }
@@ -163,39 +228,110 @@ export default function FoodifyAuth() {
     try {
       await logout();
       setUser(null);
-      alert("Signing Off .. You are now Leaving");
     } catch {
       setError("Logout failed. Try again.");
     }
   };
 
+  if (loading) {
+    return (
+      <>
+        <GlobalStyle />
+        <Container>
+          <Card>
+            <Logo>
+              <Title>Ease</Title>
+              <Subtitle>Loading...</Subtitle>
+            </Logo>
+          </Card>
+        </Container>
+      </>
+    );
+  }
+
+  if (!user) {
+    return (
+      <>
+        <GlobalStyle />
+        <Container>
+          <LeftSection>
+            <div>
+              <HeroTitle>
+                Track Your Loans & Debts
+                <br />
+                with <span>Ease</span>
+              </HeroTitle>
+              <HeroSubtitle style={{ marginTop: "16px" }}>
+                Never forget who owes you money or whom you owe.
+                <br />
+                Manage all your financial transactions in one secure place.
+              </HeroSubtitle>
+            </div>
+
+            <FeatureList>
+              <FeatureItem>
+                <FeatureIcon bgColor="#10b981">💰</FeatureIcon>
+                <FeatureText>
+                  <FeatureTitle>Track Money Lent & Borrowed</FeatureTitle>
+                  <FeatureDescription>
+                    Keep detailed records of every transaction with friends and
+                    family
+                  </FeatureDescription>
+                </FeatureText>
+              </FeatureItem>
+
+              <FeatureItem>
+                <FeatureIcon bgColor="#3b82f6">⏰</FeatureIcon>
+                <FeatureText>
+                  <FeatureTitle>Set Due Dates & Reminders</FeatureTitle>
+                  <FeatureDescription>
+                    Never miss a payment deadline with smart notifications
+                  </FeatureDescription>
+                </FeatureText>
+              </FeatureItem>
+
+              <FeatureItem>
+                <FeatureIcon bgColor="#8b5cf6">📊</FeatureIcon>
+                <FeatureText>
+                  <FeatureTitle>View Reports & Analytics</FeatureTitle>
+                  <FeatureDescription>
+                    Get insights on your lending and borrowing patterns
+                  </FeatureDescription>
+                </FeatureText>
+              </FeatureItem>
+
+              <FeatureItem>
+                <FeatureIcon bgColor="#f59e0b">🔒</FeatureIcon>
+                <FeatureText>
+                  <FeatureTitle>Secure & Private</FeatureTitle>
+                  <FeatureDescription>
+                    Your financial data is encrypted and protected
+                  </FeatureDescription>
+                </FeatureText>
+              </FeatureItem>
+            </FeatureList>
+          </LeftSection>
+
+          <Card>
+            <Logo>
+              <Title>Ease</Title>
+              <Subtitle>Manage Your Money</Subtitle>
+            </Logo>
+            <AuthForm
+              onSignup={handleSignup}
+              onLogin={handleLogin}
+              error={error}
+            />
+          </Card>
+        </Container>
+      </>
+    );
+  }
 
   return (
-    <Container>
-      <Card>
-        <Logo>
-          <Title>Ease</Title>
-          <Subtitle>Manage Your Money</Subtitle>
-        </Logo>
-
-        {!user ? (
-          <AuthForm
-            onSignup={handleSignup}
-            onLogin={handleLogin}
-            error={error}
-          />
-        ) : (
-          <UserSection>
-            <UserIcon>{user.username.charAt(0).toUpperCase()}</UserIcon>
-            <WelcomeText>
-              Welcome back, <strong>{user.username}</strong>!
-            </WelcomeText>
-            <LogoutButton onClick={handleLogout}>
-              Logout
-            </LogoutButton>
-          </UserSection>
-        )}
-      </Card>
-    </Container>
+    <>
+      <GlobalStyle />
+      <Dashboard user={user} onLogout={handleLogout} />
+    </>
   );
 }
