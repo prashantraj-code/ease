@@ -1,5 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styled from "styled-components";
+import {
+  getMoneySources,
+  createMoneySource,
+  updateMoneySource,
+  deleteMoneySource,
+} from "../api";
 
 const PageHeader = styled.div`
   margin-bottom: 32px;
@@ -31,7 +37,7 @@ const Button = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   font-family: "Futura", sans-serif;
-  margin-bottom: 24px;
+  margin-bottom: 0;
 
   &:hover {
     background: #f9fafb;
@@ -104,6 +110,7 @@ const SourceType = styled.div`
   font-size: 14px;
   color: #6b7280;
   font-family: "Futura", sans-serif;
+  text-transform: capitalize;
 `;
 
 const SourceDetails = styled.div`
@@ -225,6 +232,7 @@ const Select = styled.select`
   font-size: 15px;
   font-family: "Futura", sans-serif;
   outline: none;
+  cursor: pointer;
 
   &:focus {
     border-color: #10b981;
@@ -263,68 +271,60 @@ const EmptySubtext = styled.div`
 `;
 
 export default function MoneySourcesPage() {
-  const [sources, setSources] = useState([
-    {
-      id: 1,
-      name: "Cash",
-      type: "cash",
-      icon: "💵",
-      color: "#10b981",
-      balance: 5000,
-      description: "Physical cash on hand",
-    },
-    {
-      id: 2,
-      name: "Bank Account",
-      type: "bank",
-      icon: "🏦",
-      color: "#3b82f6",
-      accountNumber: "****1234",
-      balance: 25000,
-      description: "Primary savings account",
-    },
-    {
-      id: 3,
-      name: "Digital Wallet",
-      type: "wallet",
-      icon: "📱",
-      color: "#8b5cf6",
-      balance: 3500,
-      description: "UPI and digital payments",
-    },
-  ]);
+  const [sources, setSources] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingSource, setEditingSource] = useState(null);
 
-  const handleSubmit = (e) => {
+  const fetchSources = async () => {
+    try {
+      const res = await getMoneySources();
+      setSources(res.moneySources || []);
+    } catch (error) {
+      console.error("Error fetching money sources:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSources();
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const newSource = {
-      id: editingSource?.id || Date.now(),
+    const data = {
       name: formData.get("name"),
       type: formData.get("type"),
       balance: parseFloat(formData.get("balance") || 0),
-      description: formData.get("description"),
-      icon: getIconForType(formData.get("type")),
-      color: getColorForType(formData.get("type")),
-      accountNumber: formData.get("accountNumber") || undefined,
+      description: formData.get("description") || "",
     };
 
-    if (editingSource) {
-      setSources(
-        sources.map((s) => (s.id === editingSource.id ? newSource : s))
-      );
-    } else {
-      setSources([...sources, newSource]);
+    try {
+      if (editingSource) {
+        await updateMoneySource(editingSource.id, data);
+      } else {
+        await createMoneySource(data);
+      }
+      fetchSources();
+      setShowModal(false);
+      setEditingSource(null);
+    } catch (error) {
+      console.error("Error saving money source:", error);
+      alert("Failed to save money source");
     }
-
-    setShowModal(false);
-    setEditingSource(null);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this money source?")) {
-      setSources(sources.filter((s) => s.id !== id));
+      try {
+        await deleteMoneySource(id);
+        fetchSources();
+      } catch (error) {
+        console.error("Error deleting money source:", error);
+        alert("Failed to delete money source");
+      }
     }
   };
 
@@ -360,6 +360,14 @@ export default function MoneySourcesPage() {
 
   const totalBalance = sources.reduce((sum, s) => sum + (s.balance || 0), 0);
 
+  if (loading) {
+    return (
+      <EmptyState>
+        <EmptyText>Loading...</EmptyText>
+      </EmptyState>
+    );
+  }
+
   return (
     <>
       <PageHeader>
@@ -392,7 +400,7 @@ export default function MoneySourcesPage() {
             style={{
               fontSize: "32px",
               fontWeight: "700",
-              color: "#10b981",
+              color: totalBalance >= 0 ? "#10b981" : "#dc2626",
               fontFamily: "Futura",
             }}
           >
@@ -410,34 +418,31 @@ export default function MoneySourcesPage() {
           <EmptyIcon>🏦</EmptyIcon>
           <EmptyText>No money sources added</EmptyText>
           <EmptySubtext>
-            Add your payment methods to track your funds
+            Add your payment methods to start tracking your funds
           </EmptySubtext>
-          <PrimaryButton onClick={() => setShowModal(true)}>
-            <span style={{ fontSize: "18px" }}>+</span>
-            Add First Source
-          </PrimaryButton>
         </EmptyState>
       ) : (
         <Grid>
           {sources.map((source) => (
             <SourceCard key={source.id}>
               <SourceHeader>
-                <SourceIcon bgColor={source.color}>{source.icon}</SourceIcon>
+                <SourceIcon bgColor={getColorForType(source.type)}>
+                  {getIconForType(source.type)}
+                </SourceIcon>
                 <SourceInfo>
                   <SourceName>{source.name}</SourceName>
-                  <SourceType>{source.type.toUpperCase()}</SourceType>
+                  <SourceType>{source.type}</SourceType>
                 </SourceInfo>
               </SourceHeader>
               <SourceDetails>
-                {source.accountNumber && (
-                  <DetailRow>
-                    <DetailLabel>Account</DetailLabel>
-                    <DetailValue>{source.accountNumber}</DetailValue>
-                  </DetailRow>
-                )}
                 <DetailRow>
                   <DetailLabel>Balance</DetailLabel>
-                  <DetailValue style={{ color: "#10b981", fontSize: "18px" }}>
+                  <DetailValue
+                    style={{
+                      color: source.balance >= 0 ? "#10b981" : "#dc2626",
+                      fontSize: "18px",
+                    }}
+                  >
                     ₹{(source.balance || 0).toLocaleString("en-IN")}
                   </DetailValue>
                 </DetailRow>
@@ -488,27 +493,23 @@ export default function MoneySourcesPage() {
                 <Label>Source Name *</Label>
                 <Input
                   name="name"
-                  placeholder="e.g., Main Bank Account"
+                  placeholder="e.g., Main Bank Account, Slice, Cash"
                   defaultValue={editingSource?.name}
                   required
                 />
               </FormGroup>
               <FormGroup>
                 <Label>Type *</Label>
-                <Select name="type" defaultValue={editingSource?.type} required>
+                <Select
+                  name="type"
+                  defaultValue={editingSource?.type || "bank"}
+                  required
+                >
                   <option value="cash">Cash</option>
                   <option value="bank">Bank Account</option>
                   <option value="wallet">Digital Wallet</option>
                   <option value="credit">Credit Card</option>
                 </Select>
-              </FormGroup>
-              <FormGroup>
-                <Label>Account Number (Optional)</Label>
-                <Input
-                  name="accountNumber"
-                  placeholder="****1234"
-                  defaultValue={editingSource?.accountNumber}
-                />
               </FormGroup>
               <FormGroup>
                 <Label>Current Balance *</Label>

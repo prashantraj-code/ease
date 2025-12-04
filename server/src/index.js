@@ -8,6 +8,8 @@ import authRoutes from "./routes/auth.js";
 import transactionRoutes from "./routes/transactions.js";
 import reportRoutes from "./routes/reports.js";
 import notificationRoutes from "./routes/notifications.js";
+import moneySourceRoutes from "./routes/moneySources.js";
+import peopleRoutes from "./routes/people.js";
 
 dotenv.config();
 
@@ -18,14 +20,11 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    //  origin: ["http://localhost:5173", process.env.FRONTEND_URL],
     origin: [
-      "https://ease-kappa.vercel.app/",
+      "https://ease-kappa.vercel.app",
       "http://localhost:5173",
       process.env.FRONTEND_URL,
-    ],
-    //  origin: ["*"],
-
+    ].filter(Boolean),
     credentials: true,
   })
 );
@@ -34,6 +33,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/money-sources", moneySourceRoutes);
+app.use("/api/people", peopleRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend running ✅");

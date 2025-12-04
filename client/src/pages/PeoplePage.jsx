@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import styled from "styled-components";
-import { getTransactions } from "../api";
+import { getPeople, createPerson, updatePerson, deletePerson } from "../api";
 
 const PageHeader = styled.div`
   margin-bottom: 32px;
@@ -21,9 +21,19 @@ const PageSubtitle = styled.p`
   font-family: "Futura", sans-serif;
 `;
 
+const TopBar = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+`;
+
 const SearchWrapper = styled.div`
   position: relative;
-  margin-bottom: 24px;
+  flex: 1;
+  max-width: 400px;
 
   &:before {
     content: "🔍";
@@ -44,7 +54,6 @@ const SearchInput = styled.input`
   background: white;
   font-family: "Futura", sans-serif;
   width: 100%;
-  max-width: 500px;
 
   &:focus {
     border-color: #10b981;
@@ -52,6 +61,36 @@ const SearchInput = styled.input`
 
   &::placeholder {
     color: #9ca3af;
+  }
+`;
+
+const Button = styled.button`
+  padding: 11px 20px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: "Futura", sans-serif;
+
+  &:hover {
+    background: #f9fafb;
+  }
+`;
+
+const PrimaryButton = styled(Button)`
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    background: #059669;
   }
 `;
 
@@ -67,11 +106,9 @@ const PersonCard = styled.div`
   padding: 24px;
   border: 1px solid #e5e7eb;
   transition: all 0.2s;
-  cursor: pointer;
 
   &:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
   }
 `;
 
@@ -79,7 +116,7 @@ const PersonHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 `;
 
 const Avatar = styled.div`
@@ -108,60 +145,129 @@ const PersonName = styled.h3`
   font-family: "Futura", sans-serif;
 `;
 
-const TransactionCount = styled.div`
+const PersonContact = styled.div`
   font-size: 14px;
   color: #6b7280;
   font-family: "Futura", sans-serif;
 `;
 
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+const PersonNotes = styled.div`
+  font-size: 14px;
+  color: #6b7280;
+  font-family: "Futura", sans-serif;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
   margin-bottom: 16px;
 `;
 
-const StatBox = styled.div`
-  background: ${(props) => props.bgColor || "#f9fafb"};
-  padding: 12px;
+const ActionButtons = styled.div`
+  display: flex;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #f3f4f6;
+`;
+
+const SmallButton = styled.button`
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  background: white;
   border-radius: 8px;
-`;
-
-const StatLabel = styled.div`
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
-  margin-bottom: 4px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
   font-family: "Futura", sans-serif;
+
+  &:hover {
+    background: #f9fafb;
+  }
 `;
 
-const StatValue = styled.div`
-  font-size: 20px;
+const Modal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 24px;
   font-weight: 700;
-  color: ${(props) => props.color || "#1f2937"};
+  color: #1f2937;
+  margin: 0 0 24px 0;
   font-family: "Futura", sans-serif;
 `;
 
-const BalanceCard = styled.div`
-  background: ${(props) => (props.positive ? "#d1fae5" : "#fee2e2")};
-  padding: 12px;
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const Label = styled.label`
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  font-family: "Futura", sans-serif;
+`;
+
+const Input = styled.input`
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  text-align: center;
+  font-size: 15px;
+  font-family: "Futura", sans-serif;
+  outline: none;
+
+  &:focus {
+    border-color: #10b981;
+  }
 `;
 
-const BalanceLabel = styled.div`
-  font-size: 12px;
-  font-weight: 600;
-  color: ${(props) => (props.positive ? "#059669" : "#dc2626")};
-  margin-bottom: 4px;
+const TextArea = styled.textarea`
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 15px;
   font-family: "Futura", sans-serif;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+
+  &:focus {
+    border-color: #10b981;
+  }
 `;
 
-const BalanceValue = styled.div`
-  font-size: 20px;
-  font-weight: 700;
-  color: ${(props) => (props.positive ? "#059669" : "#dc2626")};
-  font-family: "Futura", sans-serif;
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
 `;
 
 const EmptyState = styled.div`
@@ -186,95 +292,72 @@ const EmptyText = styled.div`
 const EmptySubtext = styled.div`
   font-size: 14px;
   color: #9ca3af;
-`;
-
-const SummaryBar = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 32px;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const SummaryCard = styled.div`
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-`;
-
-const SummaryLabel = styled.div`
-  font-size: 13px;
-  font-weight: 600;
-  color: #6b7280;
-  margin-bottom: 8px;
-  font-family: "Futura", sans-serif;
-`;
-
-const SummaryValue = styled.div`
-  font-size: 28px;
-  font-weight: 700;
-  color: ${(props) => props.color || "#1f2937"};
-  font-family: "Futura", sans-serif;
+  margin-bottom: 24px;
 `;
 
 export default function PeoplePage() {
-  const [transactions, setTransactions] = useState([]);
+  const [people, setPeople] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [editingPerson, setEditingPerson] = useState(null);
+
+  const fetchPeople = async () => {
+    try {
+      const res = await getPeople();
+      setPeople(res.people || []);
+    } catch (error) {
+      console.error("Error fetching people:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const res = await getTransactions({ limit: 1000 });
-        setTransactions(res.transactions || []);
-      } catch (error) {
-        console.error("Error fetching transactions:", error);
-      }
-    };
-    fetchTransactions();
+    fetchPeople();
   }, []);
 
-  // Group transactions by person
-  const peopleMap = {};
-  transactions.forEach((txn) => {
-    if (!peopleMap[txn.person]) {
-      peopleMap[txn.person] = {
-        name: txn.person,
-        transactions: [],
-        totalLent: 0,
-        totalBorrowed: 0,
-        unpaidLent: 0,
-        unpaidBorrowed: 0,
-      };
-    }
-    peopleMap[txn.person].transactions.push(txn);
-    if (txn.type === "lent") {
-      peopleMap[txn.person].totalLent += txn.amount;
-      if (txn.status === "unpaid") {
-        peopleMap[txn.person].unpaidLent += txn.amount;
-      }
-    } else {
-      peopleMap[txn.person].totalBorrowed += txn.amount;
-      if (txn.status === "unpaid") {
-        peopleMap[txn.person].unpaidBorrowed += txn.amount;
-      }
-    }
-  });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+      name: formData.get("name"),
+      phone: formData.get("phone") || "",
+      email: formData.get("email") || "",
+      notes: formData.get("notes") || "",
+    };
 
-  const people = Object.values(peopleMap);
+    try {
+      if (editingPerson) {
+        await updatePerson(editingPerson.id, data);
+      } else {
+        await createPerson(data);
+      }
+      fetchPeople();
+      setShowModal(false);
+      setEditingPerson(null);
+    } catch (error) {
+      console.error("Error saving person:", error);
+      alert("Failed to save person");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this person?")) {
+      try {
+        await deletePerson(id);
+        fetchPeople();
+      } catch (error) {
+        console.error("Error deleting person:", error);
+        alert("Failed to delete person");
+      }
+    }
+  };
 
   // Filter by search
   const filteredPeople = people.filter((person) =>
     person.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  // Calculate summary stats
-  const totalPeople = people.length;
-  const peopleOwingYou = people.filter((p) => p.unpaidLent > 0).length;
-  const peopleYouOwe = people.filter((p) => p.unpaidBorrowed > 0).length;
 
   // Get random color for avatar
   const getAvatarColor = (name) => {
@@ -290,98 +373,153 @@ export default function PeoplePage() {
     return colors[index];
   };
 
+  if (loading) {
+    return (
+      <EmptyState>
+        <EmptyText>Loading...</EmptyText>
+      </EmptyState>
+    );
+  }
+
   return (
     <>
       <PageHeader>
         <PageTitle>People</PageTitle>
         <PageSubtitle>
-          View all people you have financial transactions with
+          Manage people you have financial transactions with
         </PageSubtitle>
       </PageHeader>
 
-      <SummaryBar>
-        <SummaryCard>
-          <SummaryLabel>Total People</SummaryLabel>
-          <SummaryValue>{totalPeople}</SummaryValue>
-        </SummaryCard>
-        <SummaryCard>
-          <SummaryLabel>People Owing You</SummaryLabel>
-          <SummaryValue color="#10b981">{peopleOwingYou}</SummaryValue>
-        </SummaryCard>
-        <SummaryCard>
-          <SummaryLabel>People You Owe</SummaryLabel>
-          <SummaryValue color="#dc2626">{peopleYouOwe}</SummaryValue>
-        </SummaryCard>
-      </SummaryBar>
-
-      <SearchWrapper>
-        <SearchInput
-          placeholder="Search people by name..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </SearchWrapper>
+      <TopBar>
+        <SearchWrapper>
+          <SearchInput
+            placeholder="Search people by name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </SearchWrapper>
+        <PrimaryButton onClick={() => setShowModal(true)}>
+          <span style={{ fontSize: "18px" }}>+</span>
+          Add Person
+        </PrimaryButton>
+      </TopBar>
 
       {filteredPeople.length === 0 ? (
         <EmptyState>
           <EmptyIcon>👥</EmptyIcon>
           <EmptyText>
-            {searchQuery ? "No people found" : "No people yet"}
+            {searchQuery ? "No people found" : "No people added yet"}
           </EmptyText>
           <EmptySubtext>
             {searchQuery
               ? "Try adjusting your search"
-              : "Add transactions to see people here"}
+              : "Add people to start tracking transactions with them"}
           </EmptySubtext>
         </EmptyState>
       ) : (
         <Grid>
-          {filteredPeople.map((person) => {
-            const netBalance = person.totalLent - person.totalBorrowed;
-            const isPositive = netBalance >= 0;
+          {filteredPeople.map((person) => (
+            <PersonCard key={person.id}>
+              <PersonHeader>
+                <Avatar color={getAvatarColor(person.name)}>
+                  {person.name.charAt(0).toUpperCase()}
+                </Avatar>
+                <PersonInfo>
+                  <PersonName>{person.name}</PersonName>
+                  {(person.phone || person.email) && (
+                    <PersonContact>
+                      {person.phone && <span>📞 {person.phone}</span>}
+                      {person.phone && person.email && " • "}
+                      {person.email && <span>✉️ {person.email}</span>}
+                    </PersonContact>
+                  )}
+                </PersonInfo>
+              </PersonHeader>
 
-            return (
-              <PersonCard key={person.name}>
-                <PersonHeader>
-                  <Avatar color={getAvatarColor(person.name)}>
-                    {person.name.charAt(0).toUpperCase()}
-                  </Avatar>
-                  <PersonInfo>
-                    <PersonName>{person.name}</PersonName>
-                    <TransactionCount>
-                      {person.transactions.length} transaction
-                      {person.transactions.length !== 1 ? "s" : ""}
-                    </TransactionCount>
-                  </PersonInfo>
-                </PersonHeader>
+              {person.notes && <PersonNotes>📝 {person.notes}</PersonNotes>}
 
-                <StatsGrid>
-                  <StatBox bgColor="#d1fae5">
-                    <StatLabel>Lent</StatLabel>
-                    <StatValue color="#059669">
-                      ₹{person.totalLent.toFixed(0)}
-                    </StatValue>
-                  </StatBox>
-                  <StatBox bgColor="#fee2e2">
-                    <StatLabel>Borrowed</StatLabel>
-                    <StatValue color="#dc2626">
-                      ₹{person.totalBorrowed.toFixed(0)}
-                    </StatValue>
-                  </StatBox>
-                </StatsGrid>
-
-                <BalanceCard positive={isPositive}>
-                  <BalanceLabel positive={isPositive}>
-                    {isPositive ? "They owe you" : "You owe them"}
-                  </BalanceLabel>
-                  <BalanceValue positive={isPositive}>
-                    ₹{Math.abs(netBalance).toFixed(0)}
-                  </BalanceValue>
-                </BalanceCard>
-              </PersonCard>
-            );
-          })}
+              <ActionButtons>
+                <SmallButton
+                  onClick={() => {
+                    setEditingPerson(person);
+                    setShowModal(true);
+                  }}
+                >
+                  ✏️ Edit
+                </SmallButton>
+                <SmallButton onClick={() => handleDelete(person.id)}>
+                  🗑️ Delete
+                </SmallButton>
+              </ActionButtons>
+            </PersonCard>
+          ))}
         </Grid>
+      )}
+
+      {showModal && (
+        <Modal
+          onClick={() => {
+            setShowModal(false);
+            setEditingPerson(null);
+          }}
+        >
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalTitle>
+              {editingPerson ? "Edit Person" : "Add Person"}
+            </ModalTitle>
+            <Form onSubmit={handleSubmit}>
+              <FormGroup>
+                <Label>Name *</Label>
+                <Input
+                  name="name"
+                  placeholder="Enter person's name"
+                  defaultValue={editingPerson?.name}
+                  required
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label>Phone (Optional)</Label>
+                <Input
+                  name="phone"
+                  type="tel"
+                  placeholder="Enter phone number"
+                  defaultValue={editingPerson?.phone}
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label>Email (Optional)</Label>
+                <Input
+                  name="email"
+                  type="email"
+                  placeholder="Enter email address"
+                  defaultValue={editingPerson?.email}
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label>Notes (Optional)</Label>
+                <TextArea
+                  name="notes"
+                  placeholder="Add any notes about this person"
+                  defaultValue={editingPerson?.notes}
+                />
+              </FormGroup>
+              <ButtonGroup>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditingPerson(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <PrimaryButton type="submit">
+                  {editingPerson ? "Update Person" : "Add Person"}
+                </PrimaryButton>
+              </ButtonGroup>
+            </Form>
+          </ModalContent>
+        </Modal>
       )}
     </>
   );

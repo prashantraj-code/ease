@@ -36,14 +36,12 @@ router.post("/signup", async (req, res) => {
       secure: process.env.NODE_ENV === "production",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    
 
     res.status(201).json({ user });
   } catch (err) {
     res.status(500).json({ message: "Signup failed" });
   }
 });
-
 
 // ✅ Login route
 router.post("/login", async (req, res) => {
@@ -54,30 +52,23 @@ router.post("/login", async (req, res) => {
       where: { OR: [{ email: identifier }, { username: identifier }] },
     });
 
-    if (!user)
-      return res.status(401).json({ message: "Invalid credentials" });
+    if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match)
-      return res.status(401).json({ message: "Invalid credentials" });
+    if (!match) return res.status(401).json({ message: "Invalid credentials" });
 
     const token = signToken({ id: user.id, username: user.username });
 
-    // res.cookie("access_token", token, {
-    //   httpOnly: true,
-    //   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    //   secure: process.env.NODE_ENV === "production",
-    //   maxAge: 7 * 24 * 60 * 60 * 1000,
-    // });
     res.cookie("access_token", token, {
       httpOnly: true,
-      sameSite: "none",
-      secure: true,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    
 
-    res.json({ user: { id: user.id, username: user.username, email: user.email } });
+    res.json({
+      user: { id: user.id, username: user.username, email: user.email },
+    });
   } catch {
     res.status(500).json({ message: "Login failed" });
   }
@@ -95,7 +86,9 @@ router.get("/me", (req, res) => {
     const token = req.cookies.access_token;
     if (!token) return res.json({ user: null });
 
-    const decoded = JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
+    const decoded = JSON.parse(
+      Buffer.from(token.split(".")[1], "base64").toString()
+    );
     res.json({ user: decoded });
   } catch {
     res.json({ user: null });

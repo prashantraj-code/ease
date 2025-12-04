@@ -5,6 +5,8 @@ import {
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  getPeople,
+  getMoneySources,
 } from "../api";
 import TransactionForm from "../components/TransactionForm";
 
@@ -33,70 +35,7 @@ const ControlBar = styled.div`
   margin-bottom: 24px;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-`;
-
-const LeftControls = styled.div`
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  align-items: center;
-`;
-
-const SearchInput = styled.input`
-  padding: 11px 16px 11px 40px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  font-size: 15px;
-  outline: none;
-  background: white;
-  font-family: "Futura", sans-serif;
-  width: 300px;
-  position: relative;
-
-  &:focus {
-    border-color: #10b981;
-  }
-
-  &::placeholder {
-    color: #9ca3af;
-  }
-`;
-
-const SearchWrapper = styled.div`
-  position: relative;
-
-  &:before {
-    content: "🔍";
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 16px;
-  }
-`;
-
-const Select = styled.select`
-  padding: 10px 16px;
-  border: 1px solid #e5e7eb;
-  background: white;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: "Futura", sans-serif;
-  outline: none;
-
-  &:hover {
-    border-color: #10b981;
-  }
-
-  &:focus {
-    border-color: #10b981;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-  }
+  justify-content: flex-end;
 `;
 
 const Button = styled.button`
@@ -162,6 +101,137 @@ const StatValue = styled.div`
   font-family: "Futura", sans-serif;
 `;
 
+// Filter Section
+const FilterSection = styled.div`
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 24px;
+  overflow: hidden;
+`;
+
+const FilterHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  font-family: "Futura", sans-serif;
+  cursor: pointer;
+
+  &:hover {
+    background: #f9fafb;
+  }
+`;
+
+const FilterIcon = styled.span`
+  font-size: 16px;
+`;
+
+const FilterContent = styled.div`
+  padding: 20px;
+  display: ${(props) => (props.isOpen ? "block" : "none")};
+`;
+
+const FilterGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FilterRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 16px;
+  align-items: flex-end;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FilterGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const FilterLabel = styled.label`
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  font-family: "Futura", sans-serif;
+`;
+
+const FilterInput = styled.input`
+  padding: 10px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  background: #f9fafb;
+  font-family: "Futura", sans-serif;
+  width: 100%;
+
+  &:focus {
+    border-color: #1f2937;
+    background: white;
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+  }
+`;
+
+const FilterSelect = styled.select`
+  padding: 10px 14px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  font-family: "Futura", sans-serif;
+  outline: none;
+  width: 100%;
+
+  &:focus {
+    border-color: #1f2937;
+    background: white;
+  }
+`;
+
+const ClearFiltersButton = styled.button`
+  padding: 10px 20px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: "Futura", sans-serif;
+  white-space: nowrap;
+
+  &:hover {
+    background: #f9fafb;
+  }
+`;
+
 const TableContainer = styled.div`
   background: white;
   border-radius: 12px;
@@ -187,6 +257,12 @@ const Th = styled.th`
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-family: "Futura", sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #f3f4f6;
+  }
 `;
 
 const Tbody = styled.tbody``;
@@ -229,11 +305,6 @@ const Badge = styled.span`
       : props.type === "borrowed"
       ? "#dc2626"
       : "#6b7280"};
-`;
-
-const StatusBadge = styled(Badge)`
-  background: ${(props) => (props.status === "paid" ? "#d1fae5" : "#fef3c7")};
-  color: ${(props) => (props.status === "paid" ? "#059669" : "#d97706")};
 `;
 
 const ActionButtons = styled.div`
@@ -305,34 +376,57 @@ const PaginationButtons = styled.div`
   gap: 8px;
 `;
 
+const SortIndicator = styled.span`
+  margin-left: 4px;
+  font-size: 10px;
+`;
+
 export default function AllTransactionsPage() {
   const [transactions, setTransactions] = useState([]);
+  const [people, setPeople] = useState([]);
+  const [moneySources, setMoneySources] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [filtersOpen, setFiltersOpen] = useState(true);
+
+  // Filter states
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterPerson, setFilterPerson] = useState("all");
+  const [filterSource, setFilterSource] = useState("all");
   const [filterType, setFilterType] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [sortBy, setSortBy] = useState("createdAt");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
+  // Sort state
+  const [sortBy, setSortBy] = useState("date");
+  const [sortOrder, setSortOrder] = useState("desc");
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const fetchTransactions = async () => {
+  const fetchData = async () => {
     try {
-      const res = await getTransactions({ limit: 1000 });
-      setTransactions(res.transactions || []);
+      const [txnRes, peopleRes, sourcesRes] = await Promise.all([
+        getTransactions({ limit: 1000 }),
+        getPeople(),
+        getMoneySources(),
+      ]);
+      setTransactions(txnRes.transactions || []);
+      setPeople(peopleRes.people || []);
+      setMoneySources(sourcesRes.moneySources || []);
     } catch (error) {
-      console.error("Error fetching transactions:", error);
+      console.error("Error fetching data:", error);
     }
   };
 
   useEffect(() => {
-    fetchTransactions();
+    fetchData();
   }, []);
 
   const handleAddTransaction = async (data) => {
     try {
       await createTransaction(data);
-      fetchTransactions();
+      fetchData();
       setShowForm(false);
     } catch (error) {
       console.error("Error creating transaction:", error);
@@ -343,7 +437,7 @@ export default function AllTransactionsPage() {
   const handleEditTransaction = async (id, data) => {
     try {
       await updateTransaction(id, data);
-      fetchTransactions();
+      fetchData();
       setShowForm(false);
       setEditingTransaction(null);
     } catch (error) {
@@ -356,7 +450,7 @@ export default function AllTransactionsPage() {
     if (window.confirm("Are you sure you want to delete this transaction?")) {
       try {
         await deleteTransaction(id);
-        fetchTransactions();
+        fetchData();
       } catch (error) {
         console.error("Error deleting transaction:", error);
         alert("Failed to delete transaction");
@@ -364,34 +458,94 @@ export default function AllTransactionsPage() {
     }
   };
 
-  // Filter and search
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setSortOrder("desc");
+    }
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setFilterPerson("all");
+    setFilterSource("all");
+    setFilterType("all");
+    setFromDate("");
+    setToDate("");
+  };
+
+  // Filter transactions
   const filteredTransactions = transactions.filter((txn) => {
+    // Search in description
     const matchesSearch =
       searchQuery === "" ||
-      txn.person.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      txn.amount.toString().includes(searchQuery) ||
       (txn.description &&
         txn.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const matchesType = filterType === "all" || txn.type === filterType;
-    const matchesStatus = filterStatus === "all" || txn.status === filterStatus;
+    // Person filter
+    const matchesPerson = filterPerson === "all" || txn.person === filterPerson;
 
-    return matchesSearch && matchesType && matchesStatus;
+    // Source filter
+    const matchesSource =
+      filterSource === "all" || txn.moneySourceId === filterSource;
+
+    // Type filter
+    const matchesType = filterType === "all" || txn.type === filterType;
+
+    // Date range filter
+    const txnDate = new Date(txn.dueDate || txn.createdAt);
+    const matchesFromDate = !fromDate || txnDate >= new Date(fromDate);
+    const matchesToDate = !toDate || txnDate <= new Date(toDate + "T23:59:59");
+
+    return (
+      matchesSearch &&
+      matchesPerson &&
+      matchesSource &&
+      matchesType &&
+      matchesFromDate &&
+      matchesToDate
+    );
   });
 
-  // Sort
+  // Sort transactions
   const sortedTransactions = [...filteredTransactions].sort((a, b) => {
-    if (sortBy === "amount") {
-      return b.amount - a.amount;
-    } else if (sortBy === "dueDate") {
-      if (!a.dueDate) return 1;
-      if (!b.dueDate) return -1;
-      return new Date(a.dueDate) - new Date(b.dueDate);
-    } else if (sortBy === "person") {
-      return a.person.localeCompare(b.person);
-    } else {
-      return new Date(b.createdAt) - new Date(a.createdAt);
+    let aVal, bVal;
+
+    switch (sortBy) {
+      case "person":
+        aVal = a.person.toLowerCase();
+        bVal = b.person.toLowerCase();
+        break;
+      case "amount":
+        aVal = a.amount;
+        bVal = b.amount;
+        break;
+      case "type":
+        aVal = a.type;
+        bVal = b.type;
+        break;
+      case "source":
+        const aSource = moneySources.find((s) => s.id === a.moneySourceId);
+        const bSource = moneySources.find((s) => s.id === b.moneySourceId);
+        aVal = aSource?.name?.toLowerCase() || "zzz";
+        bVal = bSource?.name?.toLowerCase() || "zzz";
+        break;
+      case "description":
+        aVal = (a.description || "").toLowerCase();
+        bVal = (b.description || "").toLowerCase();
+        break;
+      case "date":
+      default:
+        aVal = new Date(a.dueDate || a.createdAt);
+        bVal = new Date(b.dueDate || b.createdAt);
+        break;
     }
+
+    if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
+    if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
+    return 0;
   });
 
   // Pagination
@@ -413,6 +567,16 @@ export default function AllTransactionsPage() {
     .filter((t) => t.status === "unpaid")
     .reduce((sum, t) => sum + t.amount, 0);
 
+  const getSourceName = (sourceId) => {
+    const source = moneySources.find((s) => s.id === sourceId);
+    return source?.name || "-";
+  };
+
+  const getSortIndicator = (column) => {
+    if (sortBy !== column) return null;
+    return <SortIndicator>{sortOrder === "asc" ? "▲" : "▼"}</SortIndicator>;
+  };
+
   return (
     <>
       <PageHeader>
@@ -428,67 +592,135 @@ export default function AllTransactionsPage() {
           <StatValue>{totalTransactions}</StatValue>
         </StatCard>
         <StatCard>
-          <StatLabel>Total Lent</StatLabel>
-          <StatValue color="#10b981">₹{totalLent.toFixed(2)}</StatValue>
+          <StatLabel>Total Given</StatLabel>
+          <StatValue color="#10b981">
+            ₹{totalLent.toLocaleString("en-IN")}
+          </StatValue>
         </StatCard>
         <StatCard>
-          <StatLabel>Total Borrowed</StatLabel>
-          <StatValue color="#dc2626">₹{totalBorrowed.toFixed(2)}</StatValue>
+          <StatLabel>Total Taken</StatLabel>
+          <StatValue color="#dc2626">
+            ₹{totalBorrowed.toLocaleString("en-IN")}
+          </StatValue>
         </StatCard>
         <StatCard>
           <StatLabel>Pending Amount</StatLabel>
-          <StatValue color="#d97706">₹{pendingAmount.toFixed(2)}</StatValue>
+          <StatValue color="#d97706">
+            ₹{pendingAmount.toLocaleString("en-IN")}
+          </StatValue>
         </StatCard>
       </StatsBar>
 
       <ControlBar>
-        <LeftControls>
-          <SearchWrapper>
-            <SearchInput
-              placeholder="Search transactions..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </SearchWrapper>
-          <Select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-          >
-            <option value="all">All Types</option>
-            <option value="lent">Lent Only</option>
-            <option value="borrowed">Borrowed Only</option>
-          </Select>
-          <Select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-          >
-            <option value="all">All Status</option>
-            <option value="paid">Paid</option>
-            <option value="unpaid">Unpaid</option>
-          </Select>
-          <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="createdAt">Sort by Date</option>
-            <option value="amount">Sort by Amount</option>
-            <option value="person">Sort by Person</option>
-            <option value="dueDate">Sort by Due Date</option>
-          </Select>
-        </LeftControls>
         <PrimaryButton onClick={() => setShowForm(true)}>
           <span style={{ fontSize: "18px" }}>+</span>
           Add Transaction
         </PrimaryButton>
       </ControlBar>
 
+      {/* Filters Section */}
+      <FilterSection>
+        <FilterHeader onClick={() => setFiltersOpen(!filtersOpen)}>
+          <FilterIcon>🔽</FilterIcon>
+          Filters
+        </FilterHeader>
+        <FilterContent isOpen={filtersOpen}>
+          <FilterGrid>
+            <FilterGroup>
+              <FilterLabel>Search</FilterLabel>
+              <FilterInput
+                type="text"
+                placeholder="In descriptions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </FilterGroup>
+            <FilterGroup>
+              <FilterLabel>Person</FilterLabel>
+              <FilterSelect
+                value={filterPerson}
+                onChange={(e) => setFilterPerson(e.target.value)}
+              >
+                <option value="all">All people</option>
+                {people.map((person) => (
+                  <option key={person.id} value={person.name}>
+                    {person.name}
+                  </option>
+                ))}
+              </FilterSelect>
+            </FilterGroup>
+            <FilterGroup>
+              <FilterLabel>Source</FilterLabel>
+              <FilterSelect
+                value={filterSource}
+                onChange={(e) => setFilterSource(e.target.value)}
+              >
+                <option value="all">All sources</option>
+                {moneySources.map((source) => (
+                  <option key={source.id} value={source.id}>
+                    {source.name}
+                  </option>
+                ))}
+              </FilterSelect>
+            </FilterGroup>
+            <FilterGroup>
+              <FilterLabel>Type</FilterLabel>
+              <FilterSelect
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+              >
+                <option value="all">All types</option>
+                <option value="lent">Given</option>
+                <option value="borrowed">Taken</option>
+              </FilterSelect>
+            </FilterGroup>
+          </FilterGrid>
+          <FilterRow>
+            <FilterGroup>
+              <FilterLabel>From Date</FilterLabel>
+              <FilterInput
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+              />
+            </FilterGroup>
+            <FilterGroup>
+              <FilterLabel>To Date</FilterLabel>
+              <FilterInput
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+              />
+            </FilterGroup>
+            <ClearFiltersButton onClick={clearFilters}>
+              Clear Filters
+            </ClearFiltersButton>
+          </FilterRow>
+        </FilterContent>
+      </FilterSection>
+
       <TableContainer>
         <Table>
           <Thead>
             <Tr>
-              <Th>Person</Th>
-              <Th>Type</Th>
-              <Th>Amount</Th>
-              <Th>Status</Th>
-              <Th>Due Date</Th>
-              <Th>Date Added</Th>
+              <Th onClick={() => handleSort("person")}>
+                Person {getSortIndicator("person")}
+              </Th>
+              <Th onClick={() => handleSort("amount")}>
+                Amount {getSortIndicator("amount")}
+              </Th>
+              <Th onClick={() => handleSort("type")}>
+                Type {getSortIndicator("type")}
+              </Th>
+              <Th onClick={() => handleSort("source")}>
+                Money Source {getSortIndicator("source")}
+              </Th>
+              <Th onClick={() => handleSort("date")}>
+                Date {getSortIndicator("date")}
+              </Th>
+              <Th onClick={() => handleSort("description")}>
+                Description {getSortIndicator("description")}
+              </Th>
               <Th>Actions</Th>
             </Tr>
           </Thead>
@@ -501,8 +733,11 @@ export default function AllTransactionsPage() {
                     <EmptyText>No transactions found</EmptyText>
                     <EmptySubtext>
                       {searchQuery ||
+                      filterPerson !== "all" ||
+                      filterSource !== "all" ||
                       filterType !== "all" ||
-                      filterStatus !== "all"
+                      fromDate ||
+                      toDate
                         ? "Try adjusting your filters"
                         : "Start by adding your first transaction"}
                     </EmptySubtext>
@@ -513,25 +748,26 @@ export default function AllTransactionsPage() {
               paginatedTransactions.map((txn) => (
                 <Tr key={txn.id}>
                   <Td style={{ fontWeight: 600 }}>{txn.person}</Td>
-                  <Td>
-                    <Badge type={txn.type}>
-                      {txn.type === "lent" ? "📤 Lent" : "📥 Borrowed"}
-                    </Badge>
-                  </Td>
                   <Td style={{ fontWeight: 600 }}>
                     ₹{txn.amount.toLocaleString("en-IN")}
                   </Td>
                   <Td>
-                    <StatusBadge status={txn.status}>
-                      {txn.status === "paid" ? "✓ Paid" : "⏰ Unpaid"}
-                    </StatusBadge>
+                    <Badge type={txn.type}>
+                      {txn.type === "lent" ? "↑ Given" : "↓ Taken"}
+                    </Badge>
                   </Td>
+                  <Td>{getSourceName(txn.moneySourceId)}</Td>
                   <Td>
-                    {txn.dueDate
-                      ? new Date(txn.dueDate).toLocaleDateString()
-                      : "-"}
+                    {new Date(txn.dueDate || txn.createdAt).toLocaleDateString(
+                      "en-IN",
+                      {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      }
+                    )}
                   </Td>
-                  <Td>{new Date(txn.createdAt).toLocaleDateString()}</Td>
+                  <Td style={{ color: "#6b7280" }}>{txn.description || "-"}</Td>
                   <Td>
                     <ActionButtons>
                       <IconButton

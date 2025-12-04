@@ -321,25 +321,7 @@ const EmptySubtext = styled.div`
 `;
 
 export default function NotesPage() {
-  const [notes, setNotes] = useState([
-    {
-      id: 1,
-      title: "Payment Reminder",
-      content: "Remember to collect ₹5000 from Rahul by end of this week",
-      color: "#fef3c7",
-      tag: "Reminder",
-      date: new Date().toISOString(),
-    },
-    {
-      id: 2,
-      title: "Monthly Budget",
-      content:
-        "Target: Reduce borrowing by 20% this month. Focus on clearing pending debts first.",
-      color: "#dbeafe",
-      tag: "Goal",
-      date: new Date().toISOString(),
-    },
-  ]);
+  const [notes, setNotes] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -432,12 +414,6 @@ export default function NotesPage() {
               ? "Try adjusting your search"
               : "Create notes to remember important transaction details"}
           </EmptySubtext>
-          {!searchQuery && (
-            <PrimaryButton onClick={() => setShowModal(true)}>
-              <span style={{ fontSize: "18px" }}>+</span>
-              Create First Note
-            </PrimaryButton>
-          )}
         </EmptyState>
       ) : (
         <Grid>

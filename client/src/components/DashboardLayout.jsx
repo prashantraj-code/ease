@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styled from "styled-components";
 
@@ -92,41 +91,9 @@ const MainContent = styled.div`
 
 const TopBar = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 32px;
-`;
-
-const SearchBar = styled.div`
-  position: relative;
-  width: 400px;
-`;
-
-const SearchInput = styled.input`
-  width: 100%;
-  padding: 11px 16px 11px 40px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  font-size: 15px;
-  outline: none;
-  background: white;
-  font-family: "Futura", sans-serif;
-
-  &:focus {
-    border-color: #10b981;
-  }
-
-  &::placeholder {
-    color: #9ca3af;
-  }
-`;
-
-const SearchIcon = styled.div`
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
 `;
 
 const UserSection = styled.div`
@@ -174,7 +141,6 @@ const UserEmail = styled.div`
 export default function DashboardLayout({ user, onLogout, children }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState("");
 
   const isActive = (path) => location.pathname === path;
 
@@ -246,31 +212,6 @@ export default function DashboardLayout({ user, onLogout, children }) {
 
       <MainContent>
         <TopBar>
-          <SearchBar>
-            <SearchIcon>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <circle
-                  cx="9"
-                  cy="9"
-                  r="6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M13 13L17 17"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </SearchIcon>
-            <SearchInput
-              placeholder="Search by person or amount"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </SearchBar>
-
           <UserSection>
             <UserInfo>
               <Avatar>{user.username.charAt(0).toUpperCase()}</Avatar>

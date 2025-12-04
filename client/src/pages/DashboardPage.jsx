@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import styled from "styled-components";
 import {
   getTransactions,
-  getSummary,
   createTransaction,
   updateTransaction,
   deleteTransaction,
@@ -34,37 +33,6 @@ const ActionButtons = styled.div`
   margin-bottom: 24px;
   align-items: center;
   flex-wrap: wrap;
-`;
-
-const FilterSection = styled.div`
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  align-items: center;
-`;
-
-const Select = styled.select`
-  padding: 10px 16px;
-  border: 1px solid #e5e7eb;
-  background: white;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: "Futura", sans-serif;
-  outline: none;
-
-  &:hover {
-    border-color: #10b981;
-  }
-
-  &:focus {
-    border-color: #10b981;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-  }
 `;
 
 const Button = styled.button`
@@ -162,12 +130,8 @@ const TrendIcon = styled.div`
 
 const ContentGrid = styled.div`
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 1fr;
   gap: 24px;
-
-  @media (max-width: 1200px) {
-    grid-template-columns: 1fr;
-  }
 `;
 
 const Card = styled.div`
@@ -269,22 +233,13 @@ const IconButton = styled.button`
 
 export default function DashboardPage() {
   const [transactions, setTransactions] = useState([]);
-  const [summary, setSummary] = useState({});
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
-  const [filterType, setFilterType] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [sortBy, setSortBy] = useState("createdAt");
 
   const fetchData = async () => {
     try {
-      const [transactionsRes, summaryRes] = await Promise.all([
-        getTransactions({ limit: 1000 }),
-        getSummary(),
-      ]);
-
-      setTransactions(transactionsRes.transactions || []);
-      setSummary(summaryRes);
+      const res = await getTransactions({ limit: 1000 });
+      setTransactions(res.transactions || []);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -339,23 +294,10 @@ export default function DashboardPage() {
     (t) => t.status === "unpaid"
   ).length;
 
-  const filteredTransactions = transactions.filter((txn) => {
-    const matchesType = filterType === "all" || txn.type === filterType;
-    const matchesStatus = filterStatus === "all" || txn.status === filterStatus;
-    return matchesType && matchesStatus;
-  });
-
-  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
-    if (sortBy === "amount") {
-      return b.amount - a.amount;
-    } else if (sortBy === "dueDate") {
-      if (!a.dueDate) return 1;
-      if (!b.dueDate) return -1;
-      return new Date(a.dueDate) - new Date(b.dueDate);
-    } else {
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    }
-  });
+  // Sort transactions by date (newest first)
+  const sortedTransactions = [...transactions].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
 
   return (
     <>
@@ -373,30 +315,6 @@ export default function DashboardPage() {
         </PrimaryButton>
         <Button>Export Data</Button>
       </ActionButtons>
-
-      <FilterSection>
-        <Select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-        >
-          <option value="all">All Types</option>
-          <option value="lent">Lent Only</option>
-          <option value="borrowed">Borrowed Only</option>
-        </Select>
-        <Select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-        >
-          <option value="all">All Status</option>
-          <option value="paid">Paid</option>
-          <option value="unpaid">Unpaid</option>
-        </Select>
-        <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-          <option value="createdAt">Sort by Date</option>
-          <option value="amount">Sort by Amount</option>
-          <option value="dueDate">Sort by Due Date</option>
-        </Select>
-      </FilterSection>
 
       <CardsGrid>
         <StatCard bgColor="#10b981">
@@ -542,104 +460,87 @@ export default function DashboardPage() {
         <Card>
           <CardTitle>Recent Transactions</CardTitle>
           <PeopleList>
-            {sortedTransactions.slice(0, 5).map((txn) => {
-              const isLent = txn.type === "lent";
-              const isPaid = txn.status === "paid";
+            {transactions.length === 0 ? (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "40px 20px",
+                  color: "#9ca3af",
+                  fontFamily: "Futura",
+                }}
+              >
+                <div style={{ fontSize: "48px", marginBottom: "16px" }}>📭</div>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#6b7280",
+                    marginBottom: "8px",
+                  }}
+                >
+                  No transactions yet
+                </div>
+                <div style={{ fontSize: "14px", color: "#9ca3af" }}>
+                  Start by adding your first transaction
+                </div>
+              </div>
+            ) : (
+              sortedTransactions.map((txn) => {
+                const isLent = txn.type === "lent";
+                const isPaid = txn.status === "paid";
 
-              return (
-                <PersonCard key={txn.id}>
-                  <PersonInfo>
-                    <PersonAvatar color={isLent ? "#10b981" : "#ef4444"}>
-                      {isLent ? "📤" : "📥"}
-                    </PersonAvatar>
-                    <PersonDetails>
-                      <PersonName>{txn.person}</PersonName>
-                      <PersonSubtext>
-                        {isLent ? "Lent" : "Borrowed"} •{" "}
-                        {isPaid ? "✓ Paid" : "⏰ Unpaid"}
-                        {txn.dueDate &&
-                          ` • Due: ${new Date(
-                            txn.dueDate
-                          ).toLocaleDateString()}`}
-                      </PersonSubtext>
-                    </PersonDetails>
-                  </PersonInfo>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "8px",
-                      alignItems: "center",
-                    }}
-                  >
-                    <AmountBadge positive={isLent}>
-                      ₹{txn.amount.toLocaleString("en-IN")}
-                    </AmountBadge>
-                    <div style={{ display: "flex", gap: "4px" }}>
-                      <IconButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingTransaction(txn);
-                          setShowForm(true);
-                        }}
-                      >
-                        ✏️
-                      </IconButton>
-                      <IconButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteTransaction(txn.id);
-                        }}
-                      >
-                        🗑️
-                      </IconButton>
+                return (
+                  <PersonCard key={txn.id}>
+                    <PersonInfo>
+                      <PersonAvatar color={isLent ? "#10b981" : "#ef4444"}>
+                        {isLent ? "📤" : "📥"}
+                      </PersonAvatar>
+                      <PersonDetails>
+                        <PersonName>{txn.person}</PersonName>
+                        <PersonSubtext>
+                          {isLent ? "Lent" : "Borrowed"} •{" "}
+                          {isPaid ? "✓ Paid" : "⏰ Unpaid"}
+                          {txn.dueDate &&
+                            ` • Due: ${new Date(
+                              txn.dueDate
+                            ).toLocaleDateString()}`}
+                        </PersonSubtext>
+                      </PersonDetails>
+                    </PersonInfo>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "8px",
+                        alignItems: "center",
+                      }}
+                    >
+                      <AmountBadge positive={isLent}>
+                        ₹{txn.amount.toLocaleString("en-IN")}
+                      </AmountBadge>
+                      <div style={{ display: "flex", gap: "4px" }}>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingTransaction(txn);
+                            setShowForm(true);
+                          }}
+                        >
+                          ✏️
+                        </IconButton>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTransaction(txn.id);
+                          }}
+                        >
+                          🗑️
+                        </IconButton>
+                      </div>
                     </div>
-                  </div>
-                </PersonCard>
-              );
-            })}
-          </PeopleList>
-        </Card>
-
-        <Card>
-          <CardTitle>Quick Actions</CardTitle>
-          <PeopleList>
-            <PersonCard
-              onClick={() => {
-                setEditingTransaction({ type: "lent" });
-                setShowForm(true);
-              }}
-            >
-              <PersonInfo>
-                <PersonAvatar color="#10b981">📤</PersonAvatar>
-                <PersonDetails>
-                  <PersonName>Add Lent Money</PersonName>
-                  <PersonSubtext>Money you gave</PersonSubtext>
-                </PersonDetails>
-              </PersonInfo>
-            </PersonCard>
-            <PersonCard
-              onClick={() => {
-                setEditingTransaction({ type: "borrowed" });
-                setShowForm(true);
-              }}
-            >
-              <PersonInfo>
-                <PersonAvatar color="#ef4444">📥</PersonAvatar>
-                <PersonDetails>
-                  <PersonName>Add Borrowed Money</PersonName>
-                  <PersonSubtext>Money you took</PersonSubtext>
-                </PersonDetails>
-              </PersonInfo>
-            </PersonCard>
-            <PersonCard>
-              <PersonInfo>
-                <PersonAvatar color="#3b82f6">📊</PersonAvatar>
-                <PersonDetails>
-                  <PersonName>View Reports</PersonName>
-                  <PersonSubtext>Analytics & insights</PersonSubtext>
-                </PersonDetails>
-              </PersonInfo>
-            </PersonCard>
+                  </PersonCard>
+                );
+              })
+            )}
           </PeopleList>
         </Card>
       </ContentGrid>
