@@ -82,6 +82,31 @@ const StatCard = styled.div`
   padding: 20px;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
+  cursor: ${(props) => (props.clickable ? "pointer" : "default")};
+  transition: ${(props) => (props.noHover ? "none" : "all 0.2s ease")};
+
+  &:hover {
+    transform: ${(props) =>
+      props.clickable && !props.noHover ? "translateY(-2px)" : "none"};
+    box-shadow: ${(props) =>
+      props.clickable && !props.noHover
+        ? "0 4px 12px rgba(0, 0, 0, 0.1)"
+        : "none"};
+    background: ${(props) =>
+      props.noHover ? undefined : props.hoverBg || "white"};
+    border-color: ${(props) =>
+      props.noHover ? undefined : props.hoverBorder || "#e5e7eb"};
+  }
+
+  &:hover ${() => StatLabel} {
+    color: ${(props) =>
+      props.noHover ? undefined : props.hoverTextColor || "#6b7280"};
+  }
+
+  &:hover ${() => StatValue} {
+    color: ${(props) =>
+      props.noHover ? undefined : props.hoverTextColor || "inherit"};
+  }
 `;
 
 const StatLabel = styled.div`
@@ -420,7 +445,8 @@ export default function AllTransactionsPage() {
   const [sortColumns, setSortColumns] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [showAll, setShowAll] = useState(false);
+  const itemsPerPage = 5;
 
   const fetchData = async () => {
     try {
@@ -596,10 +622,12 @@ export default function AllTransactionsPage() {
 
   // Pagination
   const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
-  const paginatedTransactions = sortedTransactions.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const paginatedTransactions = showAll
+    ? sortedTransactions
+    : sortedTransactions.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+      );
 
   // Stats
   const totalTransactions = transactions.length;
@@ -647,26 +675,63 @@ export default function AllTransactionsPage() {
       </PageHeader>
 
       <StatsBar>
-        <StatCard>
+        <StatCard
+          clickable
+          hoverBg="#1f2937"
+          hoverBorder="#1f2937"
+          hoverTextColor="white"
+          onClick={() => {
+            clearFilters();
+            clearSorting();
+          }}
+          title="Click to show all transactions"
+        >
           <StatLabel>Total Transactions</StatLabel>
           <StatValue>{totalTransactions}</StatValue>
         </StatCard>
-        <StatCard>
+        <StatCard
+          clickable
+          hoverBg="#d1fae5"
+          hoverBorder="#10b981"
+          hoverTextColor="#059669"
+          onClick={() => {
+            clearFilters();
+            setFilterType("lent");
+          }}
+          title="Click to filter Given transactions"
+        >
           <StatLabel>Total Given</StatLabel>
           <StatValue color="#10b981">
             ₹{totalLent.toLocaleString("en-IN")}
           </StatValue>
         </StatCard>
-        <StatCard>
+        <StatCard
+          clickable
+          hoverBg="#fee2e2"
+          hoverBorder="#dc2626"
+          hoverTextColor="#dc2626"
+          onClick={() => {
+            clearFilters();
+            setFilterType("borrowed");
+          }}
+          title="Click to filter Taken transactions"
+        >
           <StatLabel>Total Taken</StatLabel>
           <StatValue color="#dc2626">
             ₹{totalBorrowed.toLocaleString("en-IN")}
           </StatValue>
         </StatCard>
-        <StatCard>
-          <StatLabel>Net Balance</StatLabel>
-          <StatValue color={netAmount >= 0 ? "#10b981" : "#dc2626"}>
-            {netAmount >= 0 ? "+" : "-"}₹{Math.abs(netAmount).toLocaleString("en-IN")}
+        <StatCard
+          noHover
+          style={{
+            background: "#1f2937",
+            borderColor: "#1f2937",
+          }}
+        >
+          <StatLabel style={{ color: "white" }}>Net Balance</StatLabel>
+          <StatValue style={{ color: "white" }}>
+            {netAmount >= 0 ? "+" : "-"}₹
+            {Math.abs(netAmount).toLocaleString("en-IN")}
           </StatValue>
         </StatCard>
       </StatsBar>
@@ -848,24 +913,45 @@ export default function AllTransactionsPage() {
         {paginatedTransactions.length > 0 && (
           <Pagination>
             <PaginationInfo>
-              Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-              {Math.min(currentPage * itemsPerPage, sortedTransactions.length)}{" "}
-              of {sortedTransactions.length} transactions
+              {showAll
+                ? `Showing all ${sortedTransactions.length} transactions`
+                : `Showing ${
+                    (currentPage - 1) * itemsPerPage + 1
+                  } to ${Math.min(
+                    currentPage * itemsPerPage,
+                    sortedTransactions.length
+                  )} of ${sortedTransactions.length} transactions`}
             </PaginationInfo>
             <PaginationButtons>
+              {!showAll && (
+                <>
+                  <Button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages || totalPages === 0}
+                  >
+                    Next
+                  </Button>
+                </>
+              )}
               <Button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
+                onClick={() => {
+                  setShowAll(!showAll);
+                  setCurrentPage(1);
+                }}
+                style={{
+                  background: showAll ? "#1f2937" : "white",
+                  color: showAll ? "white" : "#374151",
+                }}
               >
-                Previous
-              </Button>
-              <Button
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
-                }
-                disabled={currentPage === totalPages}
-              >
-                Next
+                {showAll ? "Default" : "Show All"}
               </Button>
             </PaginationButtons>
           </Pagination>

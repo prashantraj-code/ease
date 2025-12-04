@@ -265,6 +265,20 @@ const SmallSelect = styled.select`
   }
 `;
 
+const ErrorMessage = styled.div`
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: "Futura", sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
 export default function TransactionForm({
   transaction,
   initialData,
@@ -292,6 +306,7 @@ export default function TransactionForm({
       ? new Date(data.dueDate).toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0],
   });
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     fetchPeople();
@@ -326,10 +341,40 @@ export default function TransactionForm({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setFormError("");
+
     if (!formData.person || !formData.amount) {
-      alert("Person and amount are required");
+      setFormError("Person and amount are required");
       return;
     }
+
+    // Check balance for "lent" (given) transactions
+    if (formData.type === "lent" && formData.moneySourceId) {
+      const selectedSource = moneySources.find(
+        (s) => s.id === formData.moneySourceId
+      );
+      if (selectedSource) {
+        const amount = parseFloat(formData.amount);
+        // For editing, add back the original amount if same source
+        let availableBalance = selectedSource.balance;
+        if (
+          data?.id &&
+          data?.moneySourceId === formData.moneySourceId &&
+          data?.type === "lent"
+        ) {
+          availableBalance += data.amount;
+        }
+        if (amount > availableBalance) {
+          setFormError(
+            `Insufficient balance in ${
+              selectedSource.name
+            }. Available: ₹${availableBalance.toLocaleString("en-IN")}`
+          );
+          return;
+        }
+      }
+    }
+
     onSubmit(formData);
   };
 
@@ -512,6 +557,13 @@ export default function TransactionForm({
               onChange={handleChange}
             />
           </InputGroup>
+
+          {formError && (
+            <ErrorMessage>
+              <span>⚠️</span>
+              {formError}
+            </ErrorMessage>
+          )}
 
           <ButtonGroup>
             <CancelButton type="button" onClick={onClose}>
