@@ -18,6 +18,11 @@ export const getTransactions = async (params) => {
   return res.data;
 };
 
+export const getTransactionStats = async () => {
+  const res = await API.get("/transactions/stats");
+  return res.data;
+};
+
 export const createTransaction = async (data) => {
   const res = await API.post("/transactions", data);
   return res.data;
@@ -30,6 +35,11 @@ export const updateTransaction = async (id, data) => {
 
 export const deleteTransaction = async (id) => {
   const res = await API.delete(`/transactions/${id}`);
+  return res.data;
+};
+
+export const seedTransactions = async (count = 10) => {
+  const res = await API.post("/transactions/seed", { count });
   return res.data;
 };
 

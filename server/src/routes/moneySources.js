@@ -1,9 +1,8 @@
 import express from "express";
-import { PrismaClient } from "@prisma/client";
+import prisma from "../utils/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 // Get all money sources
 router.get("/", requireAuth, async (req, res) => {

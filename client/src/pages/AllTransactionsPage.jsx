@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
 import {
   getTransactions,
+  getTransactionStats,
   createTransaction,
   updateTransaction,
   deleteTransaction,
@@ -17,6 +18,11 @@ const PageHeader = styled.div`
   margin-bottom: 32px;
   flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const PageTitleSection = styled.div``;
@@ -27,6 +33,10 @@ const PageTitle = styled.h1`
   color: #1f2937;
   margin: 0 0 8px 0;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 480px) {
+    font-size: 24px;
+  }
 `;
 
 const PageSubtitle = styled.p`
@@ -34,6 +44,10 @@ const PageSubtitle = styled.p`
   color: #6b7280;
   margin: 0;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
 `;
 
 const Button = styled.button`
@@ -51,6 +65,16 @@ const Button = styled.button`
   &:hover {
     background: #f9fafb;
   }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
 `;
 
 const PrimaryButton = styled(Button)`
@@ -59,10 +83,15 @@ const PrimaryButton = styled(Button)`
   border-color: #10b981;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 
   &:hover {
     background: #059669;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
   }
 `;
 
@@ -72,8 +101,13 @@ const StatsBar = styled.div`
   gap: 16px;
   margin-bottom: 24px;
 
-  @media (max-width: 1200px) {
+  @media (max-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 `;
 
@@ -84,6 +118,10 @@ const StatCard = styled.div`
   border: 1px solid #e5e7eb;
   cursor: ${(props) => (props.clickable ? "pointer" : "default")};
   transition: ${(props) => (props.noHover ? "none" : "all 0.2s ease")};
+
+  @media (max-width: 480px) {
+    padding: 16px;
+  }
 
   &:hover {
     transform: ${(props) =>
@@ -122,6 +160,10 @@ const StatValue = styled.div`
   font-weight: 700;
   color: ${(props) => props.color || "#1f2937"};
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 480px) {
+    font-size: 24px;
+  }
 `;
 
 // Filter Section
@@ -143,6 +185,12 @@ const FilterHeader = styled.div`
   font-weight: 600;
   color: #1f2937;
   font-family: "Futura", sans-serif;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+  }
 `;
 
 const FilterHeaderLeft = styled.div`
@@ -154,6 +202,12 @@ const FilterHeaderLeft = styled.div`
 const FilterHeaderButtons = styled.div`
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: flex-end;
+  }
 `;
 
 const FilterIcon = styled.span`
@@ -162,20 +216,25 @@ const FilterIcon = styled.span`
 
 const FilterContent = styled.div`
   padding: 20px;
+
+  @media (max-width: 480px) {
+    padding: 16px;
+  }
 `;
 
 const FilterGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin-bottom: 16px;
 
-  @media (max-width: 1200px) {
-    grid-template-columns: 1fr 1fr;
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 480px) {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 `;
 
@@ -185,8 +244,9 @@ const FilterRow = styled.div`
   gap: 16px;
   align-items: flex-end;
 
-  @media (max-width: 768px) {
+  @media (max-width: 480px) {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 `;
 
@@ -212,6 +272,7 @@ const FilterInput = styled.input`
   background: #f9fafb;
   font-family: "Futura", sans-serif;
   width: 100%;
+  box-sizing: border-box;
 
   &:focus {
     border-color: #1f2937;
@@ -235,6 +296,7 @@ const FilterSelect = styled.select`
   font-family: "Futura", sans-serif;
   outline: none;
   width: 100%;
+  box-sizing: border-box;
 
   &:focus {
     border-color: #1f2937;
@@ -258,6 +320,11 @@ const ClearButton = styled.button`
   &:hover {
     background: #f9fafb;
   }
+
+  @media (max-width: 480px) {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
 `;
 
 const TableContainer = styled.div`
@@ -267,9 +334,15 @@ const TableContainer = styled.div`
   border: 1px solid #e5e7eb;
 `;
 
+const TableWrapper = styled.div`
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+`;
+
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
+  min-width: 700px;
 `;
 
 const Thead = styled.thead`
@@ -288,9 +361,15 @@ const Th = styled.th`
   cursor: ${(props) => (props.sortable ? "pointer" : "default")};
   transition: background 0.2s;
   user-select: none;
+  white-space: nowrap;
 
   &:hover {
     background: ${(props) => (props.sortable ? "#f3f4f6" : "#f9fafb")};
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+    font-size: 11px;
   }
 `;
 
@@ -314,6 +393,11 @@ const Td = styled.td`
   font-size: 15px;
   color: #374151;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
 `;
 
 const Badge = styled.span`
@@ -322,6 +406,7 @@ const Badge = styled.span`
   font-size: 13px;
   font-weight: 600;
   font-family: "Futura", sans-serif;
+  white-space: nowrap;
   background: ${(props) =>
     props.type === "lent"
       ? "#d1fae5"
@@ -334,6 +419,11 @@ const Badge = styled.span`
       : props.type === "borrowed"
       ? "#dc2626"
       : "#6b7280"};
+
+  @media (max-width: 480px) {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
 `;
 
 const ActionButtons = styled.div`
@@ -359,6 +449,12 @@ const IconButton = styled.button`
     background: #f3f4f6;
     color: #374151;
   }
+
+  @media (max-width: 480px) {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
 `;
 
 const EmptyState = styled.div`
@@ -366,11 +462,19 @@ const EmptyState = styled.div`
   padding: 60px 20px;
   color: #9ca3af;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 480px) {
+    padding: 40px 16px;
+  }
 `;
 
 const EmptyIcon = styled.div`
   font-size: 64px;
   margin-bottom: 16px;
+
+  @media (max-width: 480px) {
+    font-size: 48px;
+  }
 `;
 
 const EmptyText = styled.div`
@@ -378,11 +482,19 @@ const EmptyText = styled.div`
   font-weight: 600;
   color: #6b7280;
   margin-bottom: 8px;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 `;
 
 const EmptySubtext = styled.div`
   font-size: 14px;
   color: #9ca3af;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 `;
 
 const Pagination = styled.div`
@@ -393,16 +505,34 @@ const Pagination = styled.div`
   background: white;
   border-top: 1px solid #e5e7eb;
   font-family: "Futura", sans-serif;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+  }
 `;
 
 const PaginationInfo = styled.div`
   font-size: 14px;
   color: #6b7280;
+
+  @media (max-width: 600px) {
+    text-align: center;
+    font-size: 13px;
+  }
 `;
 
 const PaginationButtons = styled.div`
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+
+  @media (max-width: 600px) {
+    justify-content: center;
+  }
 `;
 
 const SortIndicator = styled.span`
@@ -425,52 +555,227 @@ const SortBadge = styled.span`
   margin-left: 4px;
 `;
 
+const LoadingOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Futura", sans-serif;
+  font-size: 14px;
+  color: #6b7280;
+`;
+
+const TableContainerWrapper = styled.div`
+  position: relative;
+`;
+
+// Mobile card view for transactions
+const MobileCardList = styled.div`
+  display: none;
+
+  @media (max-width: 600px) {
+    display: block;
+  }
+`;
+
+const MobileCard = styled.div`
+  padding: 16px;
+  border-bottom: 1px solid #f3f4f6;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const MobileCardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+`;
+
+const MobileCardPerson = styled.div`
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  font-family: "Futura", sans-serif;
+`;
+
+const MobileCardAmount = styled.div`
+  font-size: 16px;
+  font-weight: 700;
+  color: ${(props) => (props.type === "lent" ? "#10b981" : "#dc2626")};
+  font-family: "Futura", sans-serif;
+`;
+
+const MobileCardRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #6b7280;
+  font-family: "Futura", sans-serif;
+`;
+
+const MobileCardActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+`;
+
+const DesktopTable = styled.div`
+  @media (max-width: 600px) {
+    display: none;
+  }
+`;
+
 export default function AllTransactionsPage() {
   const [transactions, setTransactions] = useState([]);
   const [people, setPeople] = useState([]);
   const [moneySources, setMoneySources] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // Stats
+  const [stats, setStats] = useState({
+    totalTransactions: 0,
+    totalLent: 0,
+    totalBorrowed: 0,
+    netBalance: 0,
+  });
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filterPerson, setFilterPerson] = useState("all");
   const [filterSource, setFilterSource] = useState("all");
   const [filterType, setFilterType] = useState("all");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  // Multi-column sort state: array of { column, order } objects
-  // order can be "asc", "desc", or column not in array means no sort
+  // Multi-column sort state
   const [sortColumns, setSortColumns] = useState([]);
 
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [showAll, setShowAll] = useState(false);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 5,
+    totalPages: 0,
+  });
   const itemsPerPage = 5;
 
-  const fetchData = async () => {
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Fetch helper data (people, money sources, stats)
+  const fetchHelperData = async () => {
     try {
-      const [txnRes, peopleRes, sourcesRes] = await Promise.all([
-        getTransactions({ limit: 1000 }),
+      const [peopleRes, sourcesRes, statsRes] = await Promise.all([
         getPeople(),
         getMoneySources(),
+        getTransactionStats(),
       ]);
-      setTransactions(txnRes.transactions || []);
       setPeople(peopleRes.people || []);
       setMoneySources(sourcesRes.moneySources || []);
+      setStats(statsRes);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching helper data:", error);
     }
   };
 
+  // Fetch transactions with all filters
+  const fetchTransactions = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Build sort string
+      const sortBy =
+        sortColumns.length > 0
+          ? sortColumns.map((s) => `${s.column}:${s.order}`).join(",")
+          : undefined;
+
+      const params = {
+        page: showAll ? 1 : currentPage,
+        limit: showAll ? 1000 : itemsPerPage,
+        ...(debouncedSearch && { search: debouncedSearch }),
+        ...(filterPerson !== "all" && { person: filterPerson }),
+        ...(filterSource !== "all" && { moneySourceId: filterSource }),
+        ...(filterType !== "all" && { type: filterType }),
+        ...(fromDate && { fromDate }),
+        ...(toDate && { toDate }),
+        ...(sortBy && { sortBy }),
+      };
+
+      const res = await getTransactions(params);
+      setTransactions(res.transactions || []);
+      setPagination(
+        res.pagination || {
+          total: 0,
+          page: 1,
+          limit: itemsPerPage,
+          totalPages: 0,
+        }
+      );
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    currentPage,
+    showAll,
+    debouncedSearch,
+    filterPerson,
+    filterSource,
+    filterType,
+    fromDate,
+    toDate,
+    sortColumns,
+  ]);
+
   useEffect(() => {
-    fetchData();
+    fetchHelperData();
   }, []);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    debouncedSearch,
+    filterPerson,
+    filterSource,
+    filterType,
+    fromDate,
+    toDate,
+    sortColumns,
+  ]);
 
   const handleAddTransaction = async (data) => {
     try {
       await createTransaction(data);
-      fetchData();
+      fetchTransactions();
+      fetchHelperData(); // Refresh stats and money sources
       setShowForm(false);
     } catch (error) {
       console.error("Error creating transaction:", error);
@@ -481,7 +786,8 @@ export default function AllTransactionsPage() {
   const handleEditTransaction = async (id, data) => {
     try {
       await updateTransaction(id, data);
-      fetchData();
+      fetchTransactions();
+      fetchHelperData(); // Refresh stats and money sources
       setShowForm(false);
       setEditingTransaction(null);
     } catch (error) {
@@ -494,7 +800,8 @@ export default function AllTransactionsPage() {
     if (window.confirm("Are you sure you want to delete this transaction?")) {
       try {
         await deleteTransaction(id);
-        fetchData();
+        fetchTransactions();
+        fetchHelperData(); // Refresh stats and money sources
       } catch (error) {
         console.error("Error deleting transaction:", error);
         alert("Failed to delete transaction");
@@ -508,17 +815,14 @@ export default function AllTransactionsPage() {
       const existingIndex = prev.findIndex((s) => s.column === column);
 
       if (existingIndex === -1) {
-        // Not sorted - add as asc
         return [...prev, { column, order: "asc" }];
       } else {
         const existing = prev[existingIndex];
         if (existing.order === "asc") {
-          // asc -> desc
           const newSort = [...prev];
           newSort[existingIndex] = { column, order: "desc" };
           return newSort;
         } else {
-          // desc -> remove (no sort)
           return prev.filter((s) => s.column !== column);
         }
       }
@@ -527,6 +831,7 @@ export default function AllTransactionsPage() {
 
   const clearFilters = () => {
     setSearchQuery("");
+    setDebouncedSearch("");
     setFilterPerson("all");
     setFilterSource("all");
     setFilterType("all");
@@ -538,7 +843,6 @@ export default function AllTransactionsPage() {
     setSortColumns([]);
   };
 
-  // Check if any filter is applied
   const hasActiveFilters =
     searchQuery !== "" ||
     filterPerson !== "all" ||
@@ -547,98 +851,7 @@ export default function AllTransactionsPage() {
     fromDate !== "" ||
     toDate !== "";
 
-  // Check if any sorting is applied
   const hasActiveSorting = sortColumns.length > 0;
-
-  // Filter transactions
-  const filteredTransactions = transactions.filter((txn) => {
-    // Search in description
-    const matchesSearch =
-      searchQuery === "" ||
-      (txn.description &&
-        txn.description.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    // Person filter
-    const matchesPerson = filterPerson === "all" || txn.person === filterPerson;
-
-    // Source filter
-    const matchesSource =
-      filterSource === "all" || txn.moneySourceId === filterSource;
-
-    // Type filter
-    const matchesType = filterType === "all" || txn.type === filterType;
-
-    // Date range filter
-    const txnDate = new Date(txn.dueDate || txn.createdAt);
-    const matchesFromDate = !fromDate || txnDate >= new Date(fromDate);
-    const matchesToDate = !toDate || txnDate <= new Date(toDate + "T23:59:59");
-
-    return (
-      matchesSearch &&
-      matchesPerson &&
-      matchesSource &&
-      matchesType &&
-      matchesFromDate &&
-      matchesToDate
-    );
-  });
-
-  // Get value for sorting
-  const getSortValue = (txn, column) => {
-    switch (column) {
-      case "person":
-        return txn.person.toLowerCase();
-      case "amount":
-        return txn.amount;
-      case "type":
-        return txn.type;
-      case "source":
-        const source = moneySources.find((s) => s.id === txn.moneySourceId);
-        return source?.name?.toLowerCase() || "zzz";
-      case "date":
-        return new Date(txn.dueDate || txn.createdAt).getTime();
-      default:
-        return "";
-    }
-  };
-
-  // Sort transactions with multi-column support
-  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
-    for (const { column, order } of sortColumns) {
-      const aVal = getSortValue(a, column);
-      const bVal = getSortValue(b, column);
-
-      if (aVal < bVal) return order === "asc" ? -1 : 1;
-      if (aVal > bVal) return order === "asc" ? 1 : -1;
-    }
-    // Default sort by date desc if no sorts applied
-    if (sortColumns.length === 0) {
-      const aDate = new Date(a.dueDate || a.createdAt).getTime();
-      const bDate = new Date(b.dueDate || b.createdAt).getTime();
-      return bDate - aDate;
-    }
-    return 0;
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
-  const paginatedTransactions = showAll
-    ? sortedTransactions
-    : sortedTransactions.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-      );
-
-  // Stats
-  const totalTransactions = transactions.length;
-  const totalLent = transactions
-    .filter((t) => t.type === "lent")
-    .reduce((sum, t) => sum + t.amount, 0);
-  const totalBorrowed = transactions
-    .filter((t) => t.type === "borrowed")
-    .reduce((sum, t) => sum + t.amount, 0);
-  // Net amount = Total Given - Total Taken
-  const netAmount = totalLent - totalBorrowed;
 
   const getSourceName = (sourceId) => {
     const source = moneySources.find((s) => s.id === sourceId);
@@ -657,6 +870,14 @@ export default function AllTransactionsPage() {
         {sortColumns.length > 1 && <SortBadge>{priority}</SortBadge>}
       </>
     );
+  };
+
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   return (
@@ -687,7 +908,7 @@ export default function AllTransactionsPage() {
           title="Click to show all transactions"
         >
           <StatLabel>Total Transactions</StatLabel>
-          <StatValue>{totalTransactions}</StatValue>
+          <StatValue>{stats.totalTransactions}</StatValue>
         </StatCard>
         <StatCard
           clickable
@@ -702,7 +923,7 @@ export default function AllTransactionsPage() {
         >
           <StatLabel>Total Given</StatLabel>
           <StatValue color="#10b981">
-            ₹{totalLent.toLocaleString("en-IN")}
+            ₹{stats.totalLent.toLocaleString("en-IN")}
           </StatValue>
         </StatCard>
         <StatCard
@@ -718,7 +939,7 @@ export default function AllTransactionsPage() {
         >
           <StatLabel>Total Taken</StatLabel>
           <StatValue color="#dc2626">
-            ₹{totalBorrowed.toLocaleString("en-IN")}
+            ₹{stats.totalBorrowed.toLocaleString("en-IN")}
           </StatValue>
         </StatCard>
         <StatCard
@@ -730,8 +951,8 @@ export default function AllTransactionsPage() {
         >
           <StatLabel style={{ color: "white" }}>Net Balance</StatLabel>
           <StatValue style={{ color: "white" }}>
-            {netAmount >= 0 ? "+" : "-"}₹
-            {Math.abs(netAmount).toLocaleString("en-IN")}
+            {stats.netBalance >= 0 ? "+" : "-"}₹
+            {Math.abs(stats.netBalance).toLocaleString("en-IN")}
           </StatValue>
         </StatCard>
       </StatsBar>
@@ -824,139 +1045,212 @@ export default function AllTransactionsPage() {
         </FilterContent>
       </FilterSection>
 
-      <TableContainer>
-        <Table>
-          <Thead>
-            <Tr>
-              <Th sortable onClick={() => handleSort("person")}>
-                Person {getSortIndicator("person")}
-              </Th>
-              <Th sortable onClick={() => handleSort("amount")}>
-                Amount {getSortIndicator("amount")}
-              </Th>
-              <Th sortable onClick={() => handleSort("type")}>
-                Type {getSortIndicator("type")}
-              </Th>
-              <Th sortable onClick={() => handleSort("source")}>
-                Money Source {getSortIndicator("source")}
-              </Th>
-              <Th sortable onClick={() => handleSort("date")}>
-                Date {getSortIndicator("date")}
-              </Th>
-              <Th>Description</Th>
-              <Th>Actions</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {paginatedTransactions.length === 0 ? (
-              <Tr>
-                <Td colSpan="7">
-                  <EmptyState>
-                    <EmptyIcon>📭</EmptyIcon>
-                    <EmptyText>No transactions found</EmptyText>
-                    <EmptySubtext>
-                      {hasActiveFilters
-                        ? "Try adjusting your filters"
-                        : "Start by adding your first transaction"}
-                    </EmptySubtext>
-                  </EmptyState>
-                </Td>
-              </Tr>
+      <TableContainerWrapper>
+        <TableContainer>
+          {/* Desktop Table View */}
+          <DesktopTable>
+            <TableWrapper>
+              <Table>
+                <Thead>
+                  <Tr>
+                    <Th sortable onClick={() => handleSort("person")}>
+                      Person {getSortIndicator("person")}
+                    </Th>
+                    <Th sortable onClick={() => handleSort("amount")}>
+                      Amount {getSortIndicator("amount")}
+                    </Th>
+                    <Th sortable onClick={() => handleSort("type")}>
+                      Type {getSortIndicator("type")}
+                    </Th>
+                    <Th sortable onClick={() => handleSort("source")}>
+                      Money Source {getSortIndicator("source")}
+                    </Th>
+                    <Th sortable onClick={() => handleSort("date")}>
+                      Date {getSortIndicator("date")}
+                    </Th>
+                    <Th>Description</Th>
+                    <Th>Actions</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {transactions.length === 0 ? (
+                    <Tr>
+                      <Td colSpan="7">
+                        <EmptyState>
+                          <EmptyIcon>📭</EmptyIcon>
+                          <EmptyText>No transactions found</EmptyText>
+                          <EmptySubtext>
+                            {hasActiveFilters
+                              ? "Try adjusting your filters"
+                              : "Start by adding your first transaction"}
+                          </EmptySubtext>
+                        </EmptyState>
+                      </Td>
+                    </Tr>
+                  ) : (
+                    transactions.map((txn) => (
+                      <Tr key={txn.id}>
+                        <Td style={{ fontWeight: 600 }}>{txn.person}</Td>
+                        <Td style={{ fontWeight: 600 }}>
+                          ₹{txn.amount.toLocaleString("en-IN")}
+                        </Td>
+                        <Td>
+                          <Badge type={txn.type}>
+                            {txn.type === "lent" ? "↑ Given" : "↓ Taken"}
+                          </Badge>
+                        </Td>
+                        <Td>{getSourceName(txn.moneySourceId)}</Td>
+                        <Td>{formatDate(txn.dueDate || txn.createdAt)}</Td>
+                        <Td style={{ color: "#6b7280" }}>
+                          {txn.description || "-"}
+                        </Td>
+                        <Td>
+                          <ActionButtons>
+                            <IconButton
+                              onClick={() => {
+                                setEditingTransaction(txn);
+                                setShowForm(true);
+                              }}
+                              title="Edit"
+                            >
+                              ✏️
+                            </IconButton>
+                            <IconButton
+                              onClick={() => handleDeleteTransaction(txn.id)}
+                              title="Delete"
+                            >
+                              🗑️
+                            </IconButton>
+                          </ActionButtons>
+                        </Td>
+                      </Tr>
+                    ))
+                  )}
+                </Tbody>
+              </Table>
+            </TableWrapper>
+          </DesktopTable>
+
+          {/* Mobile Card View */}
+          <MobileCardList>
+            {transactions.length === 0 ? (
+              <EmptyState>
+                <EmptyIcon>📭</EmptyIcon>
+                <EmptyText>No transactions found</EmptyText>
+                <EmptySubtext>
+                  {hasActiveFilters
+                    ? "Try adjusting your filters"
+                    : "Start by adding your first transaction"}
+                </EmptySubtext>
+              </EmptyState>
             ) : (
-              paginatedTransactions.map((txn) => (
-                <Tr key={txn.id}>
-                  <Td style={{ fontWeight: 600 }}>{txn.person}</Td>
-                  <Td style={{ fontWeight: 600 }}>
-                    ₹{txn.amount.toLocaleString("en-IN")}
-                  </Td>
-                  <Td>
+              transactions.map((txn) => (
+                <MobileCard key={txn.id}>
+                  <MobileCardHeader>
+                    <MobileCardPerson>{txn.person}</MobileCardPerson>
+                    <MobileCardAmount type={txn.type}>
+                      {txn.type === "lent" ? "+" : "-"}₹
+                      {txn.amount.toLocaleString("en-IN")}
+                    </MobileCardAmount>
+                  </MobileCardHeader>
+                  <MobileCardRow>
+                    <span>Type</span>
                     <Badge type={txn.type}>
                       {txn.type === "lent" ? "↑ Given" : "↓ Taken"}
                     </Badge>
-                  </Td>
-                  <Td>{getSourceName(txn.moneySourceId)}</Td>
-                  <Td>
-                    {new Date(txn.dueDate || txn.createdAt).toLocaleDateString(
-                      "en-IN",
-                      {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      }
-                    )}
-                  </Td>
-                  <Td style={{ color: "#6b7280" }}>{txn.description || "-"}</Td>
-                  <Td>
-                    <ActionButtons>
-                      <IconButton
-                        onClick={() => {
-                          setEditingTransaction(txn);
-                          setShowForm(true);
-                        }}
-                        title="Edit"
-                      >
-                        ✏️
-                      </IconButton>
-                      <IconButton
-                        onClick={() => handleDeleteTransaction(txn.id)}
-                        title="Delete"
-                      >
-                        🗑️
-                      </IconButton>
-                    </ActionButtons>
-                  </Td>
-                </Tr>
+                  </MobileCardRow>
+                  <MobileCardRow>
+                    <span>Source</span>
+                    <span>{getSourceName(txn.moneySourceId)}</span>
+                  </MobileCardRow>
+                  <MobileCardRow>
+                    <span>Date</span>
+                    <span>{formatDate(txn.dueDate || txn.createdAt)}</span>
+                  </MobileCardRow>
+                  {txn.description && (
+                    <MobileCardRow>
+                      <span>Note</span>
+                      <span style={{ textAlign: "right", maxWidth: "60%" }}>
+                        {txn.description}
+                      </span>
+                    </MobileCardRow>
+                  )}
+                  <MobileCardActions>
+                    <IconButton
+                      onClick={() => {
+                        setEditingTransaction(txn);
+                        setShowForm(true);
+                      }}
+                      title="Edit"
+                    >
+                      ✏️
+                    </IconButton>
+                    <IconButton
+                      onClick={() => handleDeleteTransaction(txn.id)}
+                      title="Delete"
+                    >
+                      🗑️
+                    </IconButton>
+                  </MobileCardActions>
+                </MobileCard>
               ))
             )}
-          </Tbody>
-        </Table>
-        {paginatedTransactions.length > 0 && (
-          <Pagination>
-            <PaginationInfo>
-              {showAll
-                ? `Showing all ${sortedTransactions.length} transactions`
-                : `Showing ${
-                    (currentPage - 1) * itemsPerPage + 1
-                  } to ${Math.min(
-                    currentPage * itemsPerPage,
-                    sortedTransactions.length
-                  )} of ${sortedTransactions.length} transactions`}
-            </PaginationInfo>
-            <PaginationButtons>
-              {!showAll && (
-                <>
-                  <Button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(totalPages, p + 1))
-                    }
-                    disabled={currentPage === totalPages || totalPages === 0}
-                  >
-                    Next
-                  </Button>
-                </>
-              )}
-              <Button
-                onClick={() => {
-                  setShowAll(!showAll);
-                  setCurrentPage(1);
-                }}
-                style={{
-                  background: showAll ? "#1f2937" : "white",
-                  color: showAll ? "white" : "#374151",
-                }}
-              >
-                {showAll ? "Default" : "Show All"}
-              </Button>
-            </PaginationButtons>
-          </Pagination>
-        )}
-      </TableContainer>
+          </MobileCardList>
+
+          {transactions.length > 0 && (
+            <Pagination>
+              <PaginationInfo>
+                {showAll
+                  ? `Showing all ${pagination.total} transactions`
+                  : `Showing ${
+                      (currentPage - 1) * itemsPerPage + 1
+                    } to ${Math.min(
+                      currentPage * itemsPerPage,
+                      pagination.total
+                    )} of ${pagination.total} transactions`}
+              </PaginationInfo>
+              <PaginationButtons>
+                {!showAll && (
+                  <>
+                    <Button
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      onClick={() =>
+                        setCurrentPage((p) =>
+                          Math.min(pagination.totalPages, p + 1)
+                        )
+                      }
+                      disabled={
+                        currentPage === pagination.totalPages ||
+                        pagination.totalPages === 0
+                      }
+                    >
+                      Next
+                    </Button>
+                  </>
+                )}
+                <Button
+                  onClick={() => {
+                    setShowAll(!showAll);
+                    setCurrentPage(1);
+                  }}
+                  style={{
+                    background: showAll ? "#1f2937" : "white",
+                    color: showAll ? "white" : "#374151",
+                  }}
+                >
+                  {showAll ? "Default" : "Show All"}
+                </Button>
+              </PaginationButtons>
+            </Pagination>
+          )}
+        </TableContainer>
+        {loading && <LoadingOverlay>Loading...</LoadingOverlay>}
+      </TableContainerWrapper>
 
       {showForm && (
         <TransactionForm
