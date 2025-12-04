@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
+import { getNotes, createNote, updateNote, deleteNote } from "../api";
 
 const PageHeader = styled.div`
   margin-bottom: 32px;
@@ -322,10 +323,12 @@ const EmptySubtext = styled.div`
 
 export default function NotesPage() {
   const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedColor, setSelectedColor] = useState("#fef3c7");
+  const [formLoading, setFormLoading] = useState(false);
 
   const colors = [
     "#fef3c7", // yellow
@@ -338,32 +341,59 @@ export default function NotesPage() {
     "#ffffff", // white
   ];
 
-  const handleSubmit = (e) => {
+  const fetchNotes = useCallback(async () => {
+    try {
+      const res = await getNotes();
+      setNotes(res.notes || []);
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const newNote = {
-      id: editingNote?.id || Date.now(),
+    const noteData = {
       title: formData.get("title"),
       content: formData.get("content"),
-      tag: formData.get("tag"),
+      tag: formData.get("tag") || null,
       color: selectedColor,
-      date: editingNote?.date || new Date().toISOString(),
     };
 
-    if (editingNote) {
-      setNotes(notes.map((n) => (n.id === editingNote.id ? newNote : n)));
-    } else {
-      setNotes([newNote, ...notes]);
+    setFormLoading(true);
+    try {
+      if (editingNote) {
+        await updateNote(editingNote.id, noteData);
+      } else {
+        await createNote(noteData);
+      }
+      fetchNotes();
+      setShowModal(false);
+      setEditingNote(null);
+      setSelectedColor("#fef3c7");
+    } catch (error) {
+      console.error("Error saving note:", error);
+      alert("Failed to save note. Please try again.");
+    } finally {
+      setFormLoading(false);
     }
-
-    setShowModal(false);
-    setEditingNote(null);
-    setSelectedColor("#fef3c7");
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this note?")) {
-      setNotes(notes.filter((n) => n.id !== id));
+      try {
+        await deleteNote(id);
+        fetchNotes();
+      } catch (error) {
+        console.error("Error deleting note:", error);
+        alert("Failed to delete note. Please try again.");
+      }
     }
   };
 
@@ -377,8 +407,16 @@ export default function NotesPage() {
     (note) =>
       note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       note.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      note.tag.toLowerCase().includes(searchQuery.toLowerCase())
+      (note.tag && note.tag.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  if (loading) {
+    return (
+      <EmptyState>
+        <EmptyText>Loading...</EmptyText>
+      </EmptyState>
+    );
+  }
 
   return (
     <>
@@ -443,7 +481,7 @@ export default function NotesPage() {
               <NoteContent>{note.content}</NoteContent>
               <NoteFooter>
                 <NoteDate>
-                  {new Date(note.date).toLocaleDateString("en-US", {
+                  {new Date(note.createdAt).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
                     year: "numeric",

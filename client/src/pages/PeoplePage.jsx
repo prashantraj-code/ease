@@ -1,7 +1,48 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { getPeople, createPerson, updatePerson, deletePerson } from "../api";
+
+// Animations
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const spin = keyframes`
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+// Toast notification
+const ToastContainer = styled.div`
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2000;
+`;
+
+const Toast = styled.div`
+  background: ${(props) => (props.type === "error" ? "#fee2e2" : "#d1fae5")};
+  color: ${(props) => (props.type === "error" ? "#dc2626" : "#059669")};
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-family: "Futura", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: ${fadeIn} 0.2s ease-out;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
 
 const PageHeader = styled.div`
   margin-bottom: 32px;
@@ -80,6 +121,11 @@ const Button = styled.button`
   &:hover {
     background: #f9fafb;
   }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
 const PrimaryButton = styled(Button)`
@@ -88,11 +134,21 @@ const PrimaryButton = styled(Button)`
   border-color: #10b981;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: #059669;
   }
+`;
+
+const Spinner = styled.span`
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: ${spin} 0.6s linear infinite;
 `;
 
 const Grid = styled.div`
@@ -193,17 +249,11 @@ const InfoPopover = styled.div`
   max-width: 320px;
   width: max-content;
   z-index: 100;
-  animation: fadeIn 0.15s ease-out;
+  animation: ${fadeIn} 0.15s ease-out;
 
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  @media (max-width: 600px) {
+    right: auto;
+    left: 0;
   }
 
   &::before {
@@ -217,6 +267,11 @@ const InfoPopover = styled.div`
     border-left: 1px solid #e5e7eb;
     border-top: 1px solid #e5e7eb;
     transform: rotate(45deg);
+
+    @media (max-width: 600px) {
+      right: auto;
+      left: 12px;
+    }
   }
 `;
 
@@ -256,6 +311,15 @@ const PopoverValue = styled.div`
   &:last-child {
     margin-bottom: 0;
   }
+
+  a {
+    color: #3b82f6;
+    text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 `;
 
 const PopoverRow = styled.div`
@@ -278,6 +342,13 @@ const PopoverStatValue = styled.span`
   font-family: "Futura", sans-serif;
 `;
 
+const PopoverNoContact = styled.div`
+  font-size: 13px;
+  color: #9ca3af;
+  font-style: italic;
+  font-family: "Futura", sans-serif;
+`;
+
 const BalanceDisplay = styled.div`
   font-size: 28px;
   font-weight: 700;
@@ -285,49 +356,6 @@ const BalanceDisplay = styled.div`
   font-family: "Futura", sans-serif;
   text-align: center;
   padding: 20px 0;
-`;
-
-const IconButtons = styled.div`
-  display: flex;
-  gap: 8px;
-`;
-
-const IconButton = styled.button`
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #6b7280;
-  font-size: 14px;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #f3f4f6;
-    color: #374151;
-  }
-
-  &.delete:hover {
-    background: #fee2e2;
-    color: #dc2626;
-  }
-`;
-
-const StatsRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-`;
-
-const TransactionCount = styled.div`
-  font-size: 14px;
-  color: #6b7280;
-  font-family: "Futura", sans-serif;
 `;
 
 const CardActions = styled.div`
@@ -431,14 +459,14 @@ const Label = styled.label`
 
 const Input = styled.input`
   padding: 10px 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${(props) => (props.error ? "#ef4444" : "#e5e7eb")};
   border-radius: 8px;
   font-size: 15px;
   font-family: "Futura", sans-serif;
   outline: none;
 
   &:focus {
-    border-color: #10b981;
+    border-color: ${(props) => (props.error ? "#ef4444" : "#10b981")};
   }
 `;
 
@@ -461,6 +489,12 @@ const ButtonGroup = styled.div`
   display: flex;
   gap: 12px;
   margin-top: 8px;
+`;
+
+const ErrorText = styled.span`
+  font-size: 12px;
+  color: #ef4444;
+  font-family: "Futura", sans-serif;
 `;
 
 const EmptyState = styled.div`
@@ -488,85 +522,220 @@ const EmptySubtext = styled.div`
   margin-bottom: 24px;
 `;
 
+const ErrorState = styled.div`
+  text-align: center;
+  padding: 80px 20px;
+  color: #ef4444;
+  font-family: "Futura", sans-serif;
+`;
+
 export default function PeoplePage() {
   const navigate = useNavigate();
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingPerson, setEditingPerson] = useState(null);
   const [activePopover, setActivePopover] = useState(null);
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [toast, setToast] = useState(null);
+  
+  // Form state (controlled inputs to fix defaultValue issue)
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    notes: "",
+  });
+
+  const modalRef = useRef(null);
+  const firstInputRef = useRef(null);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Close popover when clicking outside
   useEffect(() => {
     const handleClickOutside = () => setActivePopover(null);
+    const handleEscape = (e) => {
+      if (e.key === "Escape") {
+        setActivePopover(null);
+      }
+    };
+    
     if (activePopover) {
       document.addEventListener("click", handleClickOutside);
-      return () => document.removeEventListener("click", handleClickOutside);
+      document.addEventListener("keydown", handleEscape);
+      return () => {
+        document.removeEventListener("click", handleClickOutside);
+        document.removeEventListener("keydown", handleEscape);
+      };
     }
   }, [activePopover]);
 
-  const fetchPeople = async () => {
+  // Focus trap for modal
+  useEffect(() => {
+    if (showModal && firstInputRef.current) {
+      firstInputRef.current.focus();
+    }
+
+    const handleEscape = (e) => {
+      if (e.key === "Escape" && showModal) {
+        closeModal();
+      }
+    };
+
+    if (showModal) {
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
+    }
+  }, [showModal]);
+
+  // Auto-hide toast
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+  };
+
+  const fetchPeople = useCallback(async () => {
     try {
+      setFetchError(null);
       const res = await getPeople();
       setPeople(res.people || []);
     } catch (error) {
       console.error("Error fetching people:", error);
+      setFetchError("Failed to load people. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchPeople();
-  }, []);
+  }, [fetchPeople]);
+
+  const openModal = (person = null) => {
+    setEditingPerson(person);
+    setFormData({
+      name: person?.name || "",
+      phone: person?.phone || "",
+      email: person?.email || "",
+      notes: person?.notes || "",
+    });
+    setFormError("");
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingPerson(null);
+    setFormData({ name: "", phone: "", email: "", notes: "" });
+    setFormError("");
+  };
+
+  const validateForm = () => {
+    const trimmedName = formData.name.trim();
+    
+    if (!trimmedName) {
+      setFormError("Name is required");
+      return false;
+    }
+
+    // Check for duplicate names (case-insensitive)
+    const isDuplicate = people.some(
+      (p) =>
+        p.name.toLowerCase() === trimmedName.toLowerCase() &&
+        p.id !== editingPerson?.id
+    );
+
+    if (isDuplicate) {
+      setFormError("A person with this name already exists");
+      return false;
+    }
+
+    // Validate email format if provided
+    if (formData.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        setFormError("Please enter a valid email address");
+        return false;
+      }
+    }
+
+    return true;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
+    setFormError("");
+
+    if (!validateForm()) {
+      return;
+    }
+
     const data = {
-      name: formData.get("name"),
-      phone: formData.get("phone")?.trim() || null,
-      email: formData.get("email")?.trim() || null,
-      notes: formData.get("notes")?.trim() || null,
+      name: formData.name.trim(),
+      phone: formData.phone.trim() || null,
+      email: formData.email.trim() || null,
+      notes: formData.notes.trim() || null,
     };
+
+    setFormLoading(true);
 
     try {
       if (editingPerson) {
         await updatePerson(editingPerson.id, data);
+        showToast(`${data.name} updated successfully`);
       } else {
         await createPerson(data);
+        showToast(`${data.name} added successfully`);
       }
       fetchPeople();
-      setShowModal(false);
-      setEditingPerson(null);
+      closeModal();
     } catch (error) {
       console.error("Error saving person:", error);
-      alert(
-        "Failed to save person: " +
-          (error.response?.data?.message || error.message)
+      setFormError(
+        error.response?.data?.message || "Failed to save person. Please try again."
       );
+    } finally {
+      setFormLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this person?")) {
+  const handleDelete = async (person) => {
+    if (window.confirm(`Are you sure you want to delete ${person.name}?`)) {
       try {
-        await deletePerson(id);
+        await deletePerson(person.id);
+        showToast(`${person.name} deleted successfully`);
         fetchPeople();
       } catch (error) {
         console.error("Error deleting person:", error);
-        alert("Failed to delete person");
+        const errorMessage = error.response?.data?.message || "Failed to delete person";
+        showToast(errorMessage, "error");
       }
     }
   };
 
-  // Filter by search
+  // Filter by debounced search
   const filteredPeople = people.filter((person) =>
-    person.name.toLowerCase().includes(searchQuery.toLowerCase())
+    person.name.toLowerCase().includes(debouncedSearch.toLowerCase())
   );
 
-  // Get random color for avatar
+  // Get consistent color for avatar based on name
   const getAvatarColor = (name) => {
     const colors = [
       "#10b981",
@@ -576,15 +745,29 @@ export default function PeoplePage() {
       "#ef4444",
       "#ec4899",
     ];
-    const index = name.charCodeAt(0) % colors.length;
-    return colors[index];
+    // Use sum of char codes for better distribution
+    const charSum = name.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    return colors[charSum % colors.length];
   };
 
   if (loading) {
     return (
       <EmptyState>
-        <EmptyText>Loading...</EmptyText>
+        <Spinner style={{ width: 32, height: 32, borderWidth: 3, color: "#10b981" }} />
+        <EmptyText style={{ marginTop: 16 }}>Loading...</EmptyText>
       </EmptyState>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <ErrorState>
+        <EmptyIcon>⚠️</EmptyIcon>
+        <EmptyText style={{ color: "#ef4444" }}>{fetchError}</EmptyText>
+        <PrimaryButton onClick={fetchPeople} style={{ margin: "0 auto" }}>
+          Try Again
+        </PrimaryButton>
+      </ErrorState>
     );
   }
 
@@ -605,7 +788,7 @@ export default function PeoplePage() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </SearchWrapper>
-        <PrimaryButton onClick={() => setShowModal(true)}>
+        <PrimaryButton onClick={() => openModal()}>
           <span style={{ fontSize: "18px" }}>+</span>
           Add Person
         </PrimaryButton>
@@ -615,13 +798,19 @@ export default function PeoplePage() {
         <EmptyState>
           <EmptyIcon>👥</EmptyIcon>
           <EmptyText>
-            {searchQuery ? "No people found" : "No people added yet"}
+            {debouncedSearch ? "No people found" : "No people added yet"}
           </EmptyText>
           <EmptySubtext>
-            {searchQuery
+            {debouncedSearch
               ? "Try adjusting your search"
               : "Add people to start tracking transactions with them"}
           </EmptySubtext>
+          {!debouncedSearch && (
+            <PrimaryButton onClick={() => openModal()}>
+              <span style={{ fontSize: "18px" }}>+</span>
+              Add Your First Person
+            </PrimaryButton>
+          )}
         </EmptyState>
       ) : (
         <Grid>
@@ -629,7 +818,6 @@ export default function PeoplePage() {
             const totalLent = person.totalLent || 0;
             const totalBorrowed = person.totalBorrowed || 0;
             const netBalance = person.netBalance || 0;
-            // Green if they owe us (positive/lent), Red if we owe them (negative/borrowed)
             const balanceColor =
               netBalance > 0
                 ? "#10b981"
@@ -654,22 +842,36 @@ export default function PeoplePage() {
                           activePopover === person.id ? null : person.id
                         );
                       }}
+                      aria-label="View details"
+                      aria-expanded={activePopover === person.id}
                     >
                       i
                     </InfoButton>
                     {activePopover === person.id && (
-                      <InfoPopover onClick={(e) => e.stopPropagation()}>
-                        {(person.phone || person.email) && (
-                          <PopoverSection>
-                            <PopoverLabel>Contact</PopoverLabel>
-                            {person.phone && (
-                              <PopoverValue>📞 {person.phone}</PopoverValue>
-                            )}
-                            {person.email && (
-                              <PopoverValue>✉️ {person.email}</PopoverValue>
-                            )}
-                          </PopoverSection>
-                        )}
+                      <InfoPopover 
+                        onClick={(e) => e.stopPropagation()}
+                        role="dialog"
+                        aria-label={`Details for ${person.name}`}
+                      >
+                        <PopoverSection>
+                          <PopoverLabel>Contact</PopoverLabel>
+                          {person.phone || person.email ? (
+                            <>
+                              {person.phone && (
+                                <PopoverValue>
+                                  📞 <a href={`tel:${person.phone}`}>{person.phone}</a>
+                                </PopoverValue>
+                              )}
+                              {person.email && (
+                                <PopoverValue>
+                                  ✉️ <a href={`mailto:${person.email}`}>{person.email}</a>
+                                </PopoverValue>
+                              )}
+                            </>
+                          ) : (
+                            <PopoverNoContact>No contact info added</PopoverNoContact>
+                          )}
+                        </PopoverSection>
                         <PopoverSection>
                           <PopoverLabel>Transaction Summary</PopoverLabel>
                           <PopoverRow>
@@ -739,17 +941,14 @@ export default function PeoplePage() {
                     ➕ Add
                   </ActionButton>
                   <ActionButtonVertical
-                    onClick={() => {
-                      setEditingPerson(person);
-                      setShowModal(true);
-                    }}
+                    onClick={() => openModal(person)}
                   >
                     <span className="emoji">✏️</span>
                     <span className="text">Edit</span>
                   </ActionButtonVertical>
                   <ActionButtonVertical
                     className="delete"
-                    onClick={() => handleDelete(person.id)}
+                    onClick={() => handleDelete(person)}
                   >
                     <span className="emoji">🗑️</span>
                     <span className="text">Delete</span>
@@ -763,68 +962,88 @@ export default function PeoplePage() {
 
       {showModal && (
         <Modal
-          onClick={() => {
-            setShowModal(false);
-            setEditingPerson(null);
-          }}
+          onClick={closeModal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
         >
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalTitle>
+          <ModalContent 
+            onClick={(e) => e.stopPropagation()}
+            ref={modalRef}
+          >
+            <ModalTitle id="modal-title">
               {editingPerson ? "Edit Person" : "Add Person"}
             </ModalTitle>
             <Form onSubmit={handleSubmit}>
               <FormGroup>
-                <Label>Name *</Label>
+                <Label htmlFor="name">Name *</Label>
                 <Input
+                  ref={firstInputRef}
+                  id="name"
                   name="name"
                   placeholder="Enter person's name"
-                  defaultValue={editingPerson?.name}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  error={formError && formError.includes("name")}
                   required
                 />
               </FormGroup>
               <FormGroup>
-                <Label>Phone (Optional)</Label>
+                <Label htmlFor="phone">Phone (Optional)</Label>
                 <Input
+                  id="phone"
                   name="phone"
                   type="tel"
                   placeholder="Enter phone number"
-                  defaultValue={editingPerson?.phone}
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 />
               </FormGroup>
               <FormGroup>
-                <Label>Email (Optional)</Label>
+                <Label htmlFor="email">Email (Optional)</Label>
                 <Input
+                  id="email"
                   name="email"
                   type="email"
                   placeholder="Enter email address"
-                  defaultValue={editingPerson?.email}
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  error={formError && formError.includes("email")}
                 />
               </FormGroup>
               <FormGroup>
-                <Label>Notes (Optional)</Label>
+                <Label htmlFor="notes">Notes (Optional)</Label>
                 <TextArea
+                  id="notes"
                   name="notes"
                   placeholder="Add any notes about this person"
-                  defaultValue={editingPerson?.notes}
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 />
               </FormGroup>
+              
+              {formError && <ErrorText>{formError}</ErrorText>}
+              
               <ButtonGroup>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    setEditingPerson(null);
-                  }}
-                >
+                <Button type="button" onClick={closeModal} disabled={formLoading}>
                   Cancel
                 </Button>
-                <PrimaryButton type="submit">
+                <PrimaryButton type="submit" disabled={formLoading}>
+                  {formLoading && <Spinner />}
                   {editingPerson ? "Update Person" : "Add Person"}
                 </PrimaryButton>
               </ButtonGroup>
             </Form>
           </ModalContent>
         </Modal>
+      )}
+
+      {toast && (
+        <ToastContainer>
+          <Toast type={toast.type}>
+            {toast.type === "error" ? "❌" : "✅"} {toast.message}
+          </Toast>
+        </ToastContainer>
       )}
     </>
   );

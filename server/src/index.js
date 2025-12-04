@@ -10,6 +10,7 @@ import reportRoutes from "./routes/reports.js";
 import notificationRoutes from "./routes/notifications.js";
 import moneySourceRoutes from "./routes/moneySources.js";
 import peopleRoutes from "./routes/people.js";
+import notesRoutes from "./routes/notes.js";
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/money-sources", moneySourceRoutes);
 app.use("/api/people", peopleRoutes);
+app.use("/api/notes", notesRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend running ✅");

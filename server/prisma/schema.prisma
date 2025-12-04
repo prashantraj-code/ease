@@ -17,6 +17,7 @@ model User {
   moneySources MoneySource[]
   people       Person[]
   transactions Transaction[]
+  notes        Note[]
 }
 
 model MoneySource {
@@ -64,4 +65,18 @@ model Transaction {
   @@index([userId])
   @@index([type])
   @@index([status])
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  content   String
+  tag       String?
+  color     String   @default("#fef3c7")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
