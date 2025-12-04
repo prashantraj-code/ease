@@ -11,8 +11,15 @@ import {
 import TransactionForm from "../components/TransactionForm";
 
 const PageHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
 `;
+
+const PageTitleSection = styled.div``;
 
 const PageTitle = styled.h1`
   font-size: 32px;
@@ -27,15 +34,6 @@ const PageSubtitle = styled.p`
   color: #6b7280;
   margin: 0;
   font-family: "Futura", sans-serif;
-`;
-
-const ControlBar = styled.div`
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
 `;
 
 const Button = styled.button`
@@ -113,18 +111,24 @@ const FilterSection = styled.div`
 const FilterHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   padding: 16px 20px;
   border-bottom: 1px solid #e5e7eb;
   font-size: 15px;
   font-weight: 600;
   color: #1f2937;
   font-family: "Futura", sans-serif;
-  cursor: pointer;
+`;
 
-  &:hover {
-    background: #f9fafb;
-  }
+const FilterHeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const FilterHeaderButtons = styled.div`
+  display: flex;
+  gap: 8px;
 `;
 
 const FilterIcon = styled.span`
@@ -133,7 +137,6 @@ const FilterIcon = styled.span`
 
 const FilterContent = styled.div`
   padding: 20px;
-  display: ${(props) => (props.isOpen ? "block" : "none")};
 `;
 
 const FilterGrid = styled.div`
@@ -153,7 +156,7 @@ const FilterGrid = styled.div`
 
 const FilterRow = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
   align-items: flex-end;
 
@@ -214,12 +217,12 @@ const FilterSelect = styled.select`
   }
 `;
 
-const ClearFiltersButton = styled.button`
-  padding: 10px 20px;
+const ClearButton = styled.button`
+  padding: 8px 16px;
   border: 1px solid #e5e7eb;
   background: white;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #374151;
   cursor: pointer;
@@ -257,11 +260,12 @@ const Th = styled.th`
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-family: "Futura", sans-serif;
-  cursor: pointer;
+  cursor: ${(props) => (props.sortable ? "pointer" : "default")};
   transition: background 0.2s;
+  user-select: none;
 
   &:hover {
-    background: #f3f4f6;
+    background: ${(props) => (props.sortable ? "#f3f4f6" : "#f9fafb")};
   }
 `;
 
@@ -379,6 +383,21 @@ const PaginationButtons = styled.div`
 const SortIndicator = styled.span`
   margin-left: 4px;
   font-size: 10px;
+  opacity: 0.8;
+`;
+
+const SortBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #10b981;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  margin-left: 4px;
 `;
 
 export default function AllTransactionsPage() {
@@ -387,7 +406,6 @@ export default function AllTransactionsPage() {
   const [moneySources, setMoneySources] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
-  const [filtersOpen, setFiltersOpen] = useState(true);
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
@@ -397,9 +415,9 @@ export default function AllTransactionsPage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  // Sort state
-  const [sortBy, setSortBy] = useState("date");
-  const [sortOrder, setSortOrder] = useState("desc");
+  // Multi-column sort state: array of { column, order } objects
+  // order can be "asc", "desc", or column not in array means no sort
+  const [sortColumns, setSortColumns] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -458,13 +476,27 @@ export default function AllTransactionsPage() {
     }
   };
 
+  // Handle sort with 3-state toggle: none -> asc -> desc -> none
   const handleSort = (column) => {
-    if (sortBy === column) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(column);
-      setSortOrder("desc");
-    }
+    setSortColumns((prev) => {
+      const existingIndex = prev.findIndex((s) => s.column === column);
+
+      if (existingIndex === -1) {
+        // Not sorted - add as asc
+        return [...prev, { column, order: "asc" }];
+      } else {
+        const existing = prev[existingIndex];
+        if (existing.order === "asc") {
+          // asc -> desc
+          const newSort = [...prev];
+          newSort[existingIndex] = { column, order: "desc" };
+          return newSort;
+        } else {
+          // desc -> remove (no sort)
+          return prev.filter((s) => s.column !== column);
+        }
+      }
+    });
   };
 
   const clearFilters = () => {
@@ -475,6 +507,22 @@ export default function AllTransactionsPage() {
     setFromDate("");
     setToDate("");
   };
+
+  const clearSorting = () => {
+    setSortColumns([]);
+  };
+
+  // Check if any filter is applied
+  const hasActiveFilters =
+    searchQuery !== "" ||
+    filterPerson !== "all" ||
+    filterSource !== "all" ||
+    filterType !== "all" ||
+    fromDate !== "" ||
+    toDate !== "";
+
+  // Check if any sorting is applied
+  const hasActiveSorting = sortColumns.length > 0;
 
   // Filter transactions
   const filteredTransactions = transactions.filter((txn) => {
@@ -509,42 +557,40 @@ export default function AllTransactionsPage() {
     );
   });
 
-  // Sort transactions
-  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
-    let aVal, bVal;
-
-    switch (sortBy) {
+  // Get value for sorting
+  const getSortValue = (txn, column) => {
+    switch (column) {
       case "person":
-        aVal = a.person.toLowerCase();
-        bVal = b.person.toLowerCase();
-        break;
+        return txn.person.toLowerCase();
       case "amount":
-        aVal = a.amount;
-        bVal = b.amount;
-        break;
+        return txn.amount;
       case "type":
-        aVal = a.type;
-        bVal = b.type;
-        break;
+        return txn.type;
       case "source":
-        const aSource = moneySources.find((s) => s.id === a.moneySourceId);
-        const bSource = moneySources.find((s) => s.id === b.moneySourceId);
-        aVal = aSource?.name?.toLowerCase() || "zzz";
-        bVal = bSource?.name?.toLowerCase() || "zzz";
-        break;
-      case "description":
-        aVal = (a.description || "").toLowerCase();
-        bVal = (b.description || "").toLowerCase();
-        break;
+        const source = moneySources.find((s) => s.id === txn.moneySourceId);
+        return source?.name?.toLowerCase() || "zzz";
       case "date":
+        return new Date(txn.dueDate || txn.createdAt).getTime();
       default:
-        aVal = new Date(a.dueDate || a.createdAt);
-        bVal = new Date(b.dueDate || b.createdAt);
-        break;
+        return "";
     }
+  };
 
-    if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
-    if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
+  // Sort transactions with multi-column support
+  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
+    for (const { column, order } of sortColumns) {
+      const aVal = getSortValue(a, column);
+      const bVal = getSortValue(b, column);
+
+      if (aVal < bVal) return order === "asc" ? -1 : 1;
+      if (aVal > bVal) return order === "asc" ? 1 : -1;
+    }
+    // Default sort by date desc if no sorts applied
+    if (sortColumns.length === 0) {
+      const aDate = new Date(a.dueDate || a.createdAt).getTime();
+      const bDate = new Date(b.dueDate || b.createdAt).getTime();
+      return bDate - aDate;
+    }
     return 0;
   });
 
@@ -563,9 +609,8 @@ export default function AllTransactionsPage() {
   const totalBorrowed = transactions
     .filter((t) => t.type === "borrowed")
     .reduce((sum, t) => sum + t.amount, 0);
-  const pendingAmount = transactions
-    .filter((t) => t.status === "unpaid")
-    .reduce((sum, t) => sum + t.amount, 0);
+  // Net amount = Total Given - Total Taken
+  const netAmount = totalLent - totalBorrowed;
 
   const getSourceName = (sourceId) => {
     const source = moneySources.find((s) => s.id === sourceId);
@@ -573,17 +618,32 @@ export default function AllTransactionsPage() {
   };
 
   const getSortIndicator = (column) => {
-    if (sortBy !== column) return null;
-    return <SortIndicator>{sortOrder === "asc" ? "▲" : "▼"}</SortIndicator>;
+    const sortInfo = sortColumns.find((s) => s.column === column);
+    if (!sortInfo) return null;
+
+    const priority = sortColumns.findIndex((s) => s.column === column) + 1;
+
+    return (
+      <>
+        <SortIndicator>{sortInfo.order === "asc" ? "▲" : "▼"}</SortIndicator>
+        {sortColumns.length > 1 && <SortBadge>{priority}</SortBadge>}
+      </>
+    );
   };
 
   return (
     <>
       <PageHeader>
-        <PageTitle>All Transactions</PageTitle>
-        <PageSubtitle>
-          Complete list of all your lending and borrowing transactions
-        </PageSubtitle>
+        <PageTitleSection>
+          <PageTitle>All Transactions</PageTitle>
+          <PageSubtitle>
+            Complete list of all your lending and borrowing transactions
+          </PageSubtitle>
+        </PageTitleSection>
+        <PrimaryButton onClick={() => setShowForm(true)}>
+          <span style={{ fontSize: "18px" }}>+</span>
+          Add Transaction
+        </PrimaryButton>
       </PageHeader>
 
       <StatsBar>
@@ -604,27 +664,30 @@ export default function AllTransactionsPage() {
           </StatValue>
         </StatCard>
         <StatCard>
-          <StatLabel>Pending Amount</StatLabel>
-          <StatValue color="#d97706">
-            ₹{pendingAmount.toLocaleString("en-IN")}
+          <StatLabel>Net Balance</StatLabel>
+          <StatValue color={netAmount >= 0 ? "#10b981" : "#dc2626"}>
+            {netAmount >= 0 ? "+" : "-"}₹{Math.abs(netAmount).toLocaleString("en-IN")}
           </StatValue>
         </StatCard>
       </StatsBar>
 
-      <ControlBar>
-        <PrimaryButton onClick={() => setShowForm(true)}>
-          <span style={{ fontSize: "18px" }}>+</span>
-          Add Transaction
-        </PrimaryButton>
-      </ControlBar>
-
       {/* Filters Section */}
       <FilterSection>
-        <FilterHeader onClick={() => setFiltersOpen(!filtersOpen)}>
-          <FilterIcon>🔽</FilterIcon>
-          Filters
+        <FilterHeader>
+          <FilterHeaderLeft>
+            <FilterIcon>🔽</FilterIcon>
+            Filters
+          </FilterHeaderLeft>
+          <FilterHeaderButtons>
+            {hasActiveFilters && (
+              <ClearButton onClick={clearFilters}>Clear Filters</ClearButton>
+            )}
+            {hasActiveSorting && (
+              <ClearButton onClick={clearSorting}>Clear Sorting</ClearButton>
+            )}
+          </FilterHeaderButtons>
         </FilterHeader>
-        <FilterContent isOpen={filtersOpen}>
+        <FilterContent>
           <FilterGrid>
             <FilterGroup>
               <FilterLabel>Search</FilterLabel>
@@ -692,9 +755,6 @@ export default function AllTransactionsPage() {
                 onChange={(e) => setToDate(e.target.value)}
               />
             </FilterGroup>
-            <ClearFiltersButton onClick={clearFilters}>
-              Clear Filters
-            </ClearFiltersButton>
           </FilterRow>
         </FilterContent>
       </FilterSection>
@@ -703,24 +763,22 @@ export default function AllTransactionsPage() {
         <Table>
           <Thead>
             <Tr>
-              <Th onClick={() => handleSort("person")}>
+              <Th sortable onClick={() => handleSort("person")}>
                 Person {getSortIndicator("person")}
               </Th>
-              <Th onClick={() => handleSort("amount")}>
+              <Th sortable onClick={() => handleSort("amount")}>
                 Amount {getSortIndicator("amount")}
               </Th>
-              <Th onClick={() => handleSort("type")}>
+              <Th sortable onClick={() => handleSort("type")}>
                 Type {getSortIndicator("type")}
               </Th>
-              <Th onClick={() => handleSort("source")}>
+              <Th sortable onClick={() => handleSort("source")}>
                 Money Source {getSortIndicator("source")}
               </Th>
-              <Th onClick={() => handleSort("date")}>
+              <Th sortable onClick={() => handleSort("date")}>
                 Date {getSortIndicator("date")}
               </Th>
-              <Th onClick={() => handleSort("description")}>
-                Description {getSortIndicator("description")}
-              </Th>
+              <Th>Description</Th>
               <Th>Actions</Th>
             </Tr>
           </Thead>
@@ -732,12 +790,7 @@ export default function AllTransactionsPage() {
                     <EmptyIcon>📭</EmptyIcon>
                     <EmptyText>No transactions found</EmptyText>
                     <EmptySubtext>
-                      {searchQuery ||
-                      filterPerson !== "all" ||
-                      filterSource !== "all" ||
-                      filterType !== "all" ||
-                      fromDate ||
-                      toDate
+                      {hasActiveFilters
                         ? "Try adjusting your filters"
                         : "Start by adding your first transaction"}
                     </EmptySubtext>

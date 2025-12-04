@@ -322,9 +322,9 @@ export default function PeoplePage() {
     const formData = new FormData(e.target);
     const data = {
       name: formData.get("name"),
-      phone: formData.get("phone") || "",
-      email: formData.get("email") || "",
-      notes: formData.get("notes") || "",
+      phone: formData.get("phone")?.trim() || null,
+      email: formData.get("email")?.trim() || null,
+      notes: formData.get("notes")?.trim() || null,
     };
 
     try {
@@ -338,7 +338,10 @@ export default function PeoplePage() {
       setEditingPerson(null);
     } catch (error) {
       console.error("Error saving person:", error);
-      alert("Failed to save person");
+      alert(
+        "Failed to save person: " +
+          (error.response?.data?.message || error.message)
+      );
     }
   };
 

@@ -298,7 +298,7 @@ export default function MoneySourcesPage() {
       name: formData.get("name"),
       type: formData.get("type"),
       balance: parseFloat(formData.get("balance") || 0),
-      description: formData.get("description") || "",
+      description: formData.get("description")?.trim() || null,
     };
 
     try {
@@ -312,7 +312,10 @@ export default function MoneySourcesPage() {
       setEditingSource(null);
     } catch (error) {
       console.error("Error saving money source:", error);
-      alert("Failed to save money source");
+      alert(
+        "Failed to save money source: " +
+          (error.response?.data?.message || error.message)
+      );
     }
   };
 

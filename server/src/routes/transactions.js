@@ -72,7 +72,7 @@ router.get("/", requireAuth, async (req, res) => {
 // Create a new transaction
 router.post("/", requireAuth, async (req, res) => {
   try {
-    const { type, person, amount, description, status, dueDate } = req.body;
+    const { type, person, amount, description, status, dueDate, moneySourceId } = req.body;
     const userId = req.user.id;
 
     if (!type || !person || !amount) {
@@ -96,6 +96,7 @@ router.post("/", requireAuth, async (req, res) => {
         description: description || null,
         status: status || "unpaid",
         dueDate: dueDate ? new Date(dueDate) : null,
+        moneySourceId: moneySourceId || null,
       },
     });
 
@@ -110,7 +111,7 @@ router.post("/", requireAuth, async (req, res) => {
 router.put("/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { type, person, amount, description, status, dueDate } = req.body;
+    const { type, person, amount, description, status, dueDate, moneySourceId } = req.body;
     const userId = req.user.id;
 
     // Check if transaction exists and belongs to user
@@ -135,6 +136,8 @@ router.put("/:id", requireAuth, async (req, res) => {
     if (status) updateData.status = status;
     if (dueDate !== undefined)
       updateData.dueDate = dueDate ? new Date(dueDate) : null;
+    if (moneySourceId !== undefined)
+      updateData.moneySourceId = moneySourceId || null;
 
     const transaction = await prisma.transaction.update({
       where: { id },
