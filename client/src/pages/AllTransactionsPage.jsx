@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import {
   getTransactions,
@@ -639,12 +640,24 @@ const DesktopTable = styled.div`
 `;
 
 export default function AllTransactionsPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Parse URL params once on initial render
+  const initialParams = new URLSearchParams(location.search);
+  const initialPersonParam = initialParams.get("person");
+  const initialAddNew = initialParams.get("addNew") === "true";
+
   const [transactions, setTransactions] = useState([]);
   const [people, setPeople] = useState([]);
   const [moneySources, setMoneySources] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [prefilledPerson, setPrefilledPerson] = useState(
+    initialPersonParam ? decodeURIComponent(initialPersonParam) : null
+  );
+  const [pendingAddNew, setPendingAddNew] = useState(initialAddNew);
 
   // Stats
   const [stats, setStats] = useState({
@@ -654,10 +667,12 @@ export default function AllTransactionsPage() {
     netBalance: 0,
   });
 
-  // Filter states
+  // Filter states - initialize from URL params
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [filterPerson, setFilterPerson] = useState("all");
+  const [filterPerson, setFilterPerson] = useState(
+    initialPersonParam ? decodeURIComponent(initialPersonParam) : "all"
+  );
   const [filterSource, setFilterSource] = useState("all");
   const [filterType, setFilterType] = useState("all");
   const [fromDate, setFromDate] = useState("");
@@ -696,6 +711,21 @@ export default function AllTransactionsPage() {
       setPeople(peopleRes.people || []);
       setMoneySources(sourcesRes.moneySources || []);
       setStats(statsRes);
+
+      // Open add form after people data is loaded if pending
+      if (pendingAddNew) {
+        setPendingAddNew(false);
+        setShowForm(true);
+        // Clean up the URL
+        const newParams = new URLSearchParams(location.search);
+        newParams.delete("addNew");
+        navigate(
+          `/transactions${
+            newParams.toString() ? `?${newParams.toString()}` : ""
+          }`,
+          { replace: true }
+        );
+      }
     } catch (error) {
       console.error("Error fetching helper data:", error);
     }
@@ -1262,8 +1292,12 @@ export default function AllTransactionsPage() {
           onClose={() => {
             setShowForm(false);
             setEditingTransaction(null);
+            setPrefilledPerson(null);
           }}
-          initialData={editingTransaction}
+          initialData={
+            editingTransaction ||
+            (prefilledPerson ? { person: prefilledPerson } : null)
+          }
         />
       )}
     </>

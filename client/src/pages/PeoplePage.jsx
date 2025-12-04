@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { getPeople, createPerson, updatePerson, deletePerson } from "../api";
 
@@ -106,6 +107,8 @@ const PersonCard = styled.div`
   padding: 24px;
   border: 1px solid #e5e7eb;
   transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
 
   &:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -114,63 +117,228 @@ const PersonCard = styled.div`
 
 const PersonHeader = styled.div`
   display: flex;
-  align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 16px;
+  min-height: 50px;
+`;
+
+const PersonLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
 `;
 
 const Avatar = styled.div`
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: ${(props) => props.color || "#10b981"};
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  font-size: 18px;
   font-weight: 700;
-  font-size: 24px;
   font-family: "Futura", sans-serif;
-`;
-
-const PersonInfo = styled.div`
-  flex: 1;
+  flex-shrink: 0;
 `;
 
 const PersonName = styled.h3`
   font-size: 18px;
   font-weight: 700;
   color: #1f2937;
-  margin: 0 0 4px 0;
+  margin: 0;
   font-family: "Futura", sans-serif;
 `;
 
-const PersonContact = styled.div`
+const InfoButtonWrapper = styled.div`
+  position: relative;
+`;
+
+const InfoButton = styled.button`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #6b7280;
   font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-family: "Futura", sans-serif;
+
+  &:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    color: #374151;
+  }
+`;
+
+const InfoPopover = styled.div`
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+  padding: 16px;
+  min-width: 240px;
+  max-width: 320px;
+  width: max-content;
+  z-index: 100;
+  animation: fadeIn 0.15s ease-out;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    right: 12px;
+    width: 12px;
+    height: 12px;
+    background: white;
+    border-left: 1px solid #e5e7eb;
+    border-top: 1px solid #e5e7eb;
+    transform: rotate(45deg);
+  }
+`;
+
+const PopoverSection = styled.div`
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f3f4f6;
+
+  &:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+`;
+
+const PopoverLabel = styled.div`
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  font-family: "Futura", sans-serif;
+`;
+
+const PopoverValue = styled.div`
+  font-size: 14px;
+  color: #374151;
+  font-family: "Futura", sans-serif;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  word-break: break-word;
+  line-height: 1.4;
+  margin-bottom: 4px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const PopoverRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+`;
+
+const PopoverStatLabel = styled.span`
+  font-size: 13px;
   color: #6b7280;
   font-family: "Futura", sans-serif;
 `;
 
-const PersonNotes = styled.div`
-  font-size: 14px;
-  color: #6b7280;
+const PopoverStatValue = styled.span`
+  font-size: 13px;
+  font-weight: 600;
+  color: ${(props) => props.color || "#374151"};
   font-family: "Futura", sans-serif;
-  padding: 12px;
-  background: #f9fafb;
-  border-radius: 8px;
+`;
+
+const BalanceDisplay = styled.div`
+  font-size: 28px;
+  font-weight: 700;
+  color: ${(props) => props.color || "#1f2937"};
+  font-family: "Futura", sans-serif;
+  text-align: center;
+  padding: 20px 0;
+`;
+
+const IconButtons = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const IconButton = styled.button`
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 14px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #f3f4f6;
+    color: #374151;
+  }
+
+  &.delete:hover {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+`;
+
+const StatsRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 16px;
 `;
 
-const ActionButtons = styled.div`
-  display: flex;
-  gap: 8px;
-  padding-top: 16px;
-  border-top: 1px solid #f3f4f6;
+const TransactionCount = styled.div`
+  font-size: 14px;
+  color: #6b7280;
+  font-family: "Futura", sans-serif;
 `;
 
-const SmallButton = styled.button`
-  flex: 1;
-  padding: 8px 12px;
+const CardActions = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+`;
+
+const ActionButton = styled.button`
+  padding: 10px 8px;
   border: 1px solid #e5e7eb;
   background: white;
   border-radius: 8px;
@@ -180,9 +348,34 @@ const SmallButton = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   font-family: "Futura", sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 
   &:hover {
     background: #f9fafb;
+    border-color: #d1d5db;
+  }
+
+  &.delete:hover {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #dc2626;
+  }
+`;
+
+const ActionButtonVertical = styled(ActionButton)`
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+
+  .emoji {
+    font-size: 16px;
+  }
+
+  .text {
+    font-size: 12px;
   }
 `;
 
@@ -296,11 +489,22 @@ const EmptySubtext = styled.div`
 `;
 
 export default function PeoplePage() {
+  const navigate = useNavigate();
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingPerson, setEditingPerson] = useState(null);
+  const [activePopover, setActivePopover] = useState(null);
+
+  // Close popover when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setActivePopover(null);
+    if (activePopover) {
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+  }, [activePopover]);
 
   const fetchPeople = async () => {
     try {
@@ -421,41 +625,139 @@ export default function PeoplePage() {
         </EmptyState>
       ) : (
         <Grid>
-          {filteredPeople.map((person) => (
-            <PersonCard key={person.id}>
-              <PersonHeader>
-                <Avatar color={getAvatarColor(person.name)}>
-                  {person.name.charAt(0).toUpperCase()}
-                </Avatar>
-                <PersonInfo>
-                  <PersonName>{person.name}</PersonName>
-                  {(person.phone || person.email) && (
-                    <PersonContact>
-                      {person.phone && <span>📞 {person.phone}</span>}
-                      {person.phone && person.email && " • "}
-                      {person.email && <span>✉️ {person.email}</span>}
-                    </PersonContact>
-                  )}
-                </PersonInfo>
-              </PersonHeader>
+          {filteredPeople.map((person) => {
+            const totalLent = person.totalLent || 0;
+            const totalBorrowed = person.totalBorrowed || 0;
+            const netBalance = person.netBalance || 0;
+            // Green if they owe us (positive/lent), Red if we owe them (negative/borrowed)
+            const balanceColor =
+              netBalance > 0
+                ? "#10b981"
+                : netBalance < 0
+                ? "#ef4444"
+                : "#6b7280";
 
-              {person.notes && <PersonNotes>📝 {person.notes}</PersonNotes>}
+            return (
+              <PersonCard key={person.id}>
+                <PersonHeader>
+                  <PersonLeft>
+                    <Avatar color={getAvatarColor(person.name)}>
+                      {person.name.charAt(0).toUpperCase()}
+                    </Avatar>
+                    <PersonName>{person.name}</PersonName>
+                  </PersonLeft>
+                  <InfoButtonWrapper>
+                    <InfoButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActivePopover(
+                          activePopover === person.id ? null : person.id
+                        );
+                      }}
+                    >
+                      i
+                    </InfoButton>
+                    {activePopover === person.id && (
+                      <InfoPopover onClick={(e) => e.stopPropagation()}>
+                        {(person.phone || person.email) && (
+                          <PopoverSection>
+                            <PopoverLabel>Contact</PopoverLabel>
+                            {person.phone && (
+                              <PopoverValue>📞 {person.phone}</PopoverValue>
+                            )}
+                            {person.email && (
+                              <PopoverValue>✉️ {person.email}</PopoverValue>
+                            )}
+                          </PopoverSection>
+                        )}
+                        <PopoverSection>
+                          <PopoverLabel>Transaction Summary</PopoverLabel>
+                          <PopoverRow>
+                            <PopoverStatLabel>Given</PopoverStatLabel>
+                            <PopoverStatValue color="#ef4444">
+                              ₹{totalLent.toLocaleString()}
+                            </PopoverStatValue>
+                          </PopoverRow>
+                          <PopoverRow>
+                            <PopoverStatLabel>Taken</PopoverStatLabel>
+                            <PopoverStatValue color="#10b981">
+                              ₹{totalBorrowed.toLocaleString()}
+                            </PopoverStatValue>
+                          </PopoverRow>
+                          <PopoverRow>
+                            <PopoverStatLabel>Net Balance</PopoverStatLabel>
+                            <PopoverStatValue color={balanceColor}>
+                              {netBalance >= 0 ? "+" : "-"}₹
+                              {Math.abs(netBalance).toLocaleString()}
+                            </PopoverStatValue>
+                          </PopoverRow>
+                        </PopoverSection>
+                        {person.notes && (
+                          <PopoverSection>
+                            <PopoverLabel>Notes</PopoverLabel>
+                            <PopoverValue
+                              style={{ fontSize: "12px", color: "#6b7280" }}
+                            >
+                              {person.notes}
+                            </PopoverValue>
+                          </PopoverSection>
+                        )}
+                      </InfoPopover>
+                    )}
+                  </InfoButtonWrapper>
+                </PersonHeader>
 
-              <ActionButtons>
-                <SmallButton
-                  onClick={() => {
-                    setEditingPerson(person);
-                    setShowModal(true);
-                  }}
-                >
-                  ✏️ Edit
-                </SmallButton>
-                <SmallButton onClick={() => handleDelete(person.id)}>
-                  🗑️ Delete
-                </SmallButton>
-              </ActionButtons>
-            </PersonCard>
-          ))}
+                <BalanceDisplay color={balanceColor}>
+                  {netBalance === 0
+                    ? "₹0"
+                    : `${netBalance > 0 ? "+" : "-"}₹${Math.abs(
+                        netBalance
+                      ).toLocaleString()}`}
+                </BalanceDisplay>
+
+                <CardActions>
+                  <ActionButton
+                    onClick={() =>
+                      navigate(
+                        `/transactions?person=${encodeURIComponent(
+                          person.name
+                        )}`
+                      )
+                    }
+                  >
+                    📊 View
+                  </ActionButton>
+                  <ActionButton
+                    onClick={() =>
+                      navigate(
+                        `/transactions?person=${encodeURIComponent(
+                          person.name
+                        )}&addNew=true`
+                      )
+                    }
+                  >
+                    ➕ Add
+                  </ActionButton>
+                  <ActionButtonVertical
+                    onClick={() => {
+                      setEditingPerson(person);
+                      setShowModal(true);
+                    }}
+                  >
+                    <span className="emoji">✏️</span>
+                    <span className="text">Edit</span>
+                  </ActionButtonVertical>
+                  <ActionButtonVertical
+                    className="delete"
+                    onClick={() => handleDelete(person.id)}
+                  >
+                    <span className="emoji">🗑️</span>
+                    <span className="text">Delete</span>
+                  </ActionButtonVertical>
+                </CardActions>
+              </PersonCard>
+            );
+          })}
         </Grid>
       )}
 

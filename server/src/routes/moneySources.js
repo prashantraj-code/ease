@@ -93,6 +93,19 @@ router.delete("/:id", requireAuth, async (req, res) => {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
+    // Check if money source has any transactions
+    const transactionCount = await prisma.transaction.count({
+      where: {
+        moneySourceId: id,
+      },
+    });
+
+    if (transactionCount > 0) {
+      return res.status(400).json({
+        message: `Cannot delete ${existing.name}. It has ${transactionCount} transaction(s). Delete the transactions first or change their money source.`,
+      });
+    }
+
     await prisma.moneySource.delete({ where: { id } });
     res.json({ message: "Money source deleted successfully" });
   } catch (err) {
