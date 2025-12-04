@@ -30,7 +30,7 @@ const Sidebar = styled.div`
 const Logo = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
   padding: 0 8px 24px 8px;
 `;
 
@@ -54,9 +54,9 @@ const LogoIcon = styled.div`
 `;
 
 const LogoText = styled.div`
-  font-size: 22px;
+  font-size: 44px;
   font-weight: 800;
-  color: #1f2937;
+  color: #10b981;
   font-family: "Futura", sans-serif;
 `;
 
@@ -579,7 +579,6 @@ export default function Dashboard({ user, onLogout }) {
     <AppContainer>
       <Sidebar>
         <Logo>
-          <LogoIcon />
           <LogoText>Ease</LogoText>
         </Logo>
 
@@ -597,44 +596,50 @@ export default function Dashboard({ user, onLogout }) {
             onClick={() => setActiveView("transactions")}
           >
             <NavIcon>💰</NavIcon>
-            All Transactions
+            All transactions
           </NavItem>
           <NavItem
-            active={activeView === "lent"}
-            onClick={() => setActiveView("lent")}
+            active={activeView === "people"}
+            onClick={() => setActiveView("people")}
           >
-            <NavIcon>📤</NavIcon>
-            Money Lent
+            <NavIcon>👥</NavIcon>
+            People
           </NavItem>
           <NavItem
-            active={activeView === "borrowed"}
-            onClick={() => setActiveView("borrowed")}
+            active={activeView === "sources"}
+            onClick={() => setActiveView("sources")}
           >
-            <NavIcon>📥</NavIcon>
-            Money Borrowed
+            <NavIcon>🏦</NavIcon>
+            Money sources
           </NavItem>
           <NavItem
-            active={activeView === "reports"}
-            onClick={() => setActiveView("reports")}
+            active={activeView === "notes"}
+            onClick={() => setActiveView("notes")}
           >
-            <NavIcon>📈</NavIcon>
-            Reports
+            <NavIcon>📝</NavIcon>
+            Notes
           </NavItem>
         </Nav>
 
         <MenuLabel>GENERAL</MenuLabel>
         <Nav>
-          <NavItem onClick={onLogout}>
+          <NavItem
+            active={activeView === "settings"}
+            onClick={() => setActiveView("settings")}
+          >
             <NavIcon>⚙️</NavIcon>
             Settings
           </NavItem>
-          <NavItem>
+          <NavItem
+            active={activeView === "help"}
+            onClick={() => setActiveView("help")}
+          >
             <NavIcon>❓</NavIcon>
             Help
           </NavItem>
           <NavItem onClick={onLogout}>
             <NavIcon>→</NavIcon>
-            Logout
+            Log out
           </NavItem>
         </Nav>
       </Sidebar>
@@ -667,55 +672,13 @@ export default function Dashboard({ user, onLogout }) {
           </SearchBar>
 
           <UserSection>
-            <IconButton>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path
-                  d="M15 7C15 7 16 9 16 11C16 13 15 15 15 15"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M5 9C5 9 4 10 4 11C4 12 5 13 5 13"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M10 3C8.5 3 7 4.5 7 7V11C7 13 8.5 15 10 15C11.5 15 13 13 13 11V7C13 4.5 11.5 3 10 3Z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M6 15.5C6 17 7.79 18 10 18C12.21 18 14 17 14 15.5"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </IconButton>
-            <IconButton>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <circle
-                  cx="10"
-                  cy="5"
-                  r="3"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M4 18C4 14.6863 6.68629 12 10 12C13.3137 12 16 14.6863 16 18"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </IconButton>
             <UserInfo>
               <Avatar>{user.username.charAt(0).toUpperCase()}</Avatar>
               <UserDetails>
-                <UserName>Totok Michael</UserName>
-                <UserEmail>{user.username}@email.com</UserEmail>
+                <UserName>{user.username}</UserName>
+                <UserEmail>
+                  {user.email || `${user.username}@email.com`}
+                </UserEmail>
               </UserDetails>
             </UserInfo>
           </UserSection>

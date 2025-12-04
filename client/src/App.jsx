@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import styled, { createGlobalStyle } from "styled-components";
 import AuthForm from "./components/AuthForm";
-import Dashboard from "./components/Dashboard2";
+import DashboardLayout from "./components/DashboardLayout";
+import DashboardPage from "./pages/DashboardPage";
+import AllTransactionsPage from "./pages/AllTransactionsPage";
+import PeoplePage from "./pages/PeoplePage";
+import MoneySourcesPage from "./pages/MoneySourcesPage";
+import NotesPage from "./pages/NotesPage";
+import SettingsPage from "./pages/SettingsPage";
+import HelpPage from "./pages/HelpPage";
 import { signup, login, getUser, logout } from "./api";
 
 const GlobalStyle = createGlobalStyle`
@@ -331,7 +339,67 @@ export default function App() {
   return (
     <>
       <GlobalStyle />
-      <Dashboard user={user} onLogout={handleLogout} />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route
+            path="/dashboard"
+            element={
+              <DashboardLayout user={user} onLogout={handleLogout}>
+                <DashboardPage />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/transactions"
+            element={
+              <DashboardLayout user={user} onLogout={handleLogout}>
+                <AllTransactionsPage />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/people"
+            element={
+              <DashboardLayout user={user} onLogout={handleLogout}>
+                <PeoplePage />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/sources"
+            element={
+              <DashboardLayout user={user} onLogout={handleLogout}>
+                <MoneySourcesPage />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/notes"
+            element={
+              <DashboardLayout user={user} onLogout={handleLogout}>
+                <NotesPage />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <DashboardLayout user={user} onLogout={handleLogout}>
+                <SettingsPage />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/help"
+            element={
+              <DashboardLayout user={user} onLogout={handleLogout}>
+                <HelpPage />
+              </DashboardLayout>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
     </>
   );
 }
