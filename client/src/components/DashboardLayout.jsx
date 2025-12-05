@@ -43,8 +43,10 @@ const MenuLabel = styled.div`
   font-family: "Futura", sans-serif;
 `;
 
-const Nav = styled.nav`
-  flex: 1;
+const NavSection = styled.nav``;
+
+const NavSectionGeneral = styled.nav`
+  margin-top: 16px;
 `;
 
 const NavItem = styled.div`
@@ -152,7 +154,7 @@ export default function DashboardLayout({ user, onLogout, children }) {
         </Logo>
 
         <MenuLabel>MENU</MenuLabel>
-        <Nav>
+        <NavSection>
           <NavItem
             active={isActive("/dashboard")}
             onClick={() => navigate("/dashboard")}
@@ -188,10 +190,10 @@ export default function DashboardLayout({ user, onLogout, children }) {
             <NavIcon>📝</NavIcon>
             Notes
           </NavItem>
-        </Nav>
+        </NavSection>
 
-        <MenuLabel>GENERAL</MenuLabel>
-        <Nav>
+        <NavSectionGeneral>
+          <MenuLabel>GENERAL</MenuLabel>
           <NavItem
             active={isActive("/settings")}
             onClick={() => navigate("/settings")}
@@ -207,7 +209,7 @@ export default function DashboardLayout({ user, onLogout, children }) {
             <NavIcon>→</NavIcon>
             Log out
           </NavItem>
-        </Nav>
+        </NavSectionGeneral>
       </Sidebar>
 
       <MainContent>
