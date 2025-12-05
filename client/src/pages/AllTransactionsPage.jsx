@@ -646,6 +646,7 @@ export default function AllTransactionsPage() {
   // Parse URL params once on initial render
   const initialParams = new URLSearchParams(location.search);
   const initialPersonParam = initialParams.get("person");
+  const initialTypeParam = initialParams.get("type");
   const initialAddNew = initialParams.get("addNew") === "true";
 
   const [transactions, setTransactions] = useState([]);
@@ -674,7 +675,12 @@ export default function AllTransactionsPage() {
     initialPersonParam ? decodeURIComponent(initialPersonParam) : "all"
   );
   const [filterSource, setFilterSource] = useState("all");
-  const [filterType, setFilterType] = useState("all");
+  const [filterType, setFilterType] = useState(
+    initialTypeParam &&
+      (initialTypeParam === "lent" || initialTypeParam === "borrowed")
+      ? initialTypeParam
+      : "all"
+  );
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 

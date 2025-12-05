@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import {
   getTransactions,
@@ -7,6 +8,12 @@ import {
   deleteTransaction,
 } from "../api";
 import TransactionForm from "../components/TransactionForm";
+
+// Helper function to format currency without decimals for large numbers
+const formatCurrency = (amount) => {
+  const num = Math.round(amount);
+  return num.toLocaleString("en-IN");
+};
 
 const PageHeader = styled.div`
   margin-bottom: 32px;
@@ -113,6 +120,14 @@ const StatCard = styled.div`
   padding: 24px;
   position: relative;
   overflow: hidden;
+  cursor: ${(props) => (props.$clickable ? "pointer" : "default")};
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: ${(props) => (props.$clickable ? "translateY(-2px)" : "none")};
+    box-shadow: ${(props) =>
+      props.$clickable ? "0 4px 12px rgba(0, 0, 0, 0.15)" : "none"};
+  }
 
   @media (max-width: 768px) {
     padding: 20px;
@@ -326,9 +341,74 @@ const IconButton = styled.button`
 `;
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const [transactions, setTransactions] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const res = await getTransactions({ limit: 10000 });
+      const data = res.transactions || res;
+
+      if (!data || data.length === 0) {
+        alert("No transactions to export");
+        setExporting(false);
+        return;
+      }
+
+      const headers = [
+        "Date",
+        "Type",
+        "Amount",
+        "Description",
+        "Person",
+        "Money Source",
+        "Status",
+      ];
+
+      const rows = data.map((t) => {
+        let formattedDate = "";
+        if (t.dueDate) {
+          formattedDate = new Date(t.dueDate).toLocaleDateString("en-GB");
+        } else if (t.createdAt) {
+          formattedDate = new Date(t.createdAt).toLocaleDateString("en-GB");
+        }
+        return [
+          formattedDate,
+          t.type || "",
+          t.amount || 0,
+          t.description || "",
+          t.person || "",
+          t.moneySourceName || "",
+          t.status || "",
+        ];
+      });
+
+      const csvContent = [
+        headers.join(","),
+        ...rows.map((row) =>
+          row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+        ),
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `transactions_${
+        new Date().toISOString().split("T")[0]
+      }.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    } catch (err) {
+      console.error("Export failed:", err);
+      alert("Failed to export transactions");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -407,15 +487,21 @@ export default function DashboardPage() {
           <span style={{ fontSize: "20px" }}>+</span>
           Add Transaction
         </PrimaryButton>
-        <Button>Export Data</Button>
+        <Button onClick={handleExportData} disabled={exporting}>
+          {exporting ? "Exporting..." : "Export Data"}
+        </Button>
       </ActionButtons>
 
       <CardsGrid>
-        <StatCard bgColor="#10b981">
+        <StatCard
+          bgColor="#10b981"
+          $clickable
+          onClick={() => navigate("/transactions?type=lent")}
+        >
           <StatHeader>
             <div>
               <StatLabel color="rgba(255,255,255,0.9)">Total Lent</StatLabel>
-              <StatValue color="white">₹{totalLent.toFixed(2)}</StatValue>
+              <StatValue color="white">₹{formatCurrency(totalLent)}</StatValue>
               <StatChange color="rgba(255,255,255,0.8)">
                 <span>💸</span> Money you gave
               </StatChange>
@@ -440,11 +526,14 @@ export default function DashboardPage() {
           </StatHeader>
         </StatCard>
 
-        <StatCard>
+        <StatCard
+          $clickable
+          onClick={() => navigate("/transactions?type=borrowed")}
+        >
           <StatHeader>
             <div>
               <StatLabel>Total Borrowed</StatLabel>
-              <StatValue>₹{totalBorrowed.toFixed(2)}</StatValue>
+              <StatValue>₹{formatCurrency(totalBorrowed)}</StatValue>
               <StatChange>
                 <span style={{ color: "#dc2626" }}>💳</span> Money you took
               </StatChange>
@@ -478,7 +567,7 @@ export default function DashboardPage() {
                   color: totalLent - totalBorrowed >= 0 ? "#10b981" : "#dc2626",
                 }}
               >
-                ₹{(totalLent - totalBorrowed).toFixed(2)}
+                ₹{formatCurrency(totalLent - totalBorrowed)}
               </StatValue>
               <StatChange>
                 <span
