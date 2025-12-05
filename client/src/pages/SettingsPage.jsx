@@ -1,42 +1,58 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
+import {
+  getUser,
+  getTransactions,
+  logout,
+  updateProfile,
+  updateCurrency,
+  deleteAllTransactions,
+} from "../api";
+import { useNavigate } from "react-router-dom";
 
 const PageHeader = styled.div`
   margin-bottom: 32px;
 `;
 
 const PageTitle = styled.h1`
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 8px 0;
-  font-family: "Futura", sans-serif;
-`;
-
-const PageSubtitle = styled.p`
-  font-size: 16px;
-  color: #6b7280;
+  color: #111827;
   margin: 0;
   font-family: "Futura", sans-serif;
 `;
 
+const PageSubtitle = styled.p`
+  font-size: 15px;
+  color: #6b7280;
+  margin: 8px 0 0;
+  font-family: "Futura", sans-serif;
+`;
+
 const SettingsContainer = styled.div`
-  max-width: 800px;
+  max-width: 640px;
 `;
 
 const Section = styled.div`
   background: white;
   border-radius: 12px;
   padding: 24px;
-  margin-bottom: 20px;
-  border: 1px solid #e5e7eb;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 `;
 
 const SectionTitle = styled.h2`
-  font-size: 18px;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 8px;
+  font-family: "Futura", sans-serif;
+`;
+
+const SectionSubtitle = styled.p`
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 20px;
   font-family: "Futura", sans-serif;
 `;
 
@@ -44,7 +60,7 @@ const SettingRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0;
+  padding: 12px 0;
   border-bottom: 1px solid #f3f4f6;
 
   &:last-child {
@@ -62,89 +78,29 @@ const SettingInfo = styled.div`
 `;
 
 const SettingLabel = styled.div`
-  font-size: 15px;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
   font-family: "Futura", sans-serif;
 `;
 
 const SettingDescription = styled.div`
   font-size: 13px;
   color: #6b7280;
+  margin-top: 2px;
   font-family: "Futura", sans-serif;
-`;
-
-const Toggle = styled.label`
-  position: relative;
-  display: inline-block;
-  width: 48px;
-  height: 24px;
-  cursor: pointer;
-`;
-
-const ToggleInput = styled.input`
-  opacity: 0;
-  width: 0;
-  height: 0;
-
-  &:checked + span {
-    background-color: #10b981;
-  }
-
-  &:checked + span:before {
-    transform: translateX(24px);
-  }
-`;
-
-const ToggleSlider = styled.span`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #d1d5db;
-  border-radius: 24px;
-  transition: 0.3s;
-
-  &:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    border-radius: 50%;
-    transition: 0.3s;
-  }
 `;
 
 const Select = styled.select`
   padding: 8px 12px;
   border: 1px solid #e5e7eb;
-  background: white;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
   color: #374151;
+  background: white;
   cursor: pointer;
   font-family: "Futura", sans-serif;
   outline: none;
-
-  &:focus {
-    border-color: #10b981;
-  }
-`;
-
-const Input = styled.input`
-  padding: 8px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 14px;
-  font-family: "Futura", sans-serif;
-  outline: none;
-  max-width: 200px;
 
   &:focus {
     border-color: #10b981;
@@ -162,9 +118,17 @@ const Button = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   font-family: "Futura", sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 
   &:hover {
     background: #f9fafb;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `;
 
@@ -173,18 +137,28 @@ const PrimaryButton = styled(Button)`
   color: white;
   border-color: #10b981;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: #059669;
   }
 `;
 
 const DangerButton = styled(Button)`
-  background: #fee2e2;
-  color: #dc2626;
-  border-color: #fecaca;
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
 
-  &:hover {
-    background: #fecaca;
+  &:hover:not(:disabled) {
+    background: #b91c1c;
+  }
+`;
+
+const DangerOutlineButton = styled(Button)`
+  background: white;
+  color: #dc2626;
+  border-color: #dc2626;
+
+  &:hover:not(:disabled) {
+    background: #fef2f2;
   }
 `;
 
@@ -204,138 +178,472 @@ const InfoText = styled.p`
   line-height: 1.5;
 `;
 
-const FormGroup = styled.div`
-  margin-bottom: 16px;
+const SuccessMessage = styled.div`
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  color: #166534;
+  font-size: 14px;
+  font-family: "Futura", sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
 
-  &:last-child {
-    margin-bottom: 0;
+const Avatar = styled.div`
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: ${(props) =>
+    props.$hasImage
+      ? "transparent"
+      : "linear-gradient(135deg, #10b981, #059669)"};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 32px;
+  font-weight: 700;
+  font-family: "Futura", sans-serif;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 `;
 
-const Label = styled.label`
-  display: block;
+const AvatarOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  font-size: 14px;
+  color: white;
+
+  ${Avatar}:hover & {
+    opacity: 1;
+  }
+`;
+
+const ProfileHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #f3f4f6;
+`;
+
+const ProfileInfo = styled.div`
+  flex: 1;
+`;
+
+const ProfileName = styled.div`
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  font-family: "Futura", sans-serif;
+  margin-bottom: 4px;
+`;
+
+const ProfileEmail = styled.div`
+  font-size: 14px;
+  color: #6b7280;
+  font-family: "Futura", sans-serif;
+`;
+
+const EditButton = styled.button`
+  background: none;
+  border: none;
+  color: #10b981;
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
-  margin-bottom: 8px;
+  cursor: pointer;
   font-family: "Futura", sans-serif;
+  padding: 4px 8px;
+  border-radius: 4px;
+
+  &:hover {
+    background: #f0fdf4;
+  }
+`;
+
+const Input = styled.input`
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #374151;
+  font-family: "Futura", sans-serif;
+  outline: none;
+  width: 100%;
+
+  &:focus {
+    border-color: #10b981;
+  }
+`;
+
+const EditForm = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 8px;
 `;
 
-export default function SettingsPage() {
-  const [settings, setSettings] = useState({
-    notifications: true,
-    emailReminders: true,
-    dueDateAlerts: true,
-    darkMode: false,
-    currency: "INR",
-    language: "en",
-    autoBackup: true,
-  });
+const AccountActions = styled.div`
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+`;
 
-  const handleToggle = (key) => {
-    setSettings({ ...settings, [key]: !settings[key] });
+const HiddenInput = styled.input`
+  display: none;
+`;
+
+export default function SettingsPage({ onUserUpdate }) {
+  const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState("");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingCurrency, setSavingCurrency] = useState(false);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await getUser();
+        setUser(res.data.user);
+        setEditName(res.data.user?.name || res.data.user?.username || "");
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const showSuccessMessage = (msg) => {
+    setShowSuccess(msg);
+    setTimeout(() => setShowSuccess(""), 3000);
   };
 
-  const handleSelect = (key, value) => {
-    setSettings({ ...settings, [key]: value });
+  const handleCurrencyChange = async (value) => {
+    setSavingCurrency(true);
+    try {
+      const res = await updateCurrency(value);
+      setUser(res.user);
+      if (onUserUpdate) onUserUpdate(res.user);
+      showSuccessMessage("Currency updated successfully");
+    } catch (err) {
+      console.error("Failed to update currency:", err);
+      alert("Failed to update currency");
+    } finally {
+      setSavingCurrency(false);
+    }
   };
+
+  const handleSaveName = async () => {
+    if (!editName.trim()) return;
+    setSavingProfile(true);
+    try {
+      const res = await updateProfile({ name: editName.trim() });
+      setUser(res.user);
+      if (onUserUpdate) onUserUpdate(res.user);
+      setIsEditingName(false);
+      showSuccessMessage("Profile updated successfully");
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+      alert("Failed to update profile");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleProfilePicChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result;
+      setSavingProfile(true);
+      try {
+        const res = await updateProfile({ profilePic: base64 });
+        setUser(res.user);
+        if (onUserUpdate) onUserUpdate(res.user);
+        showSuccessMessage("Profile picture updated successfully");
+      } catch (err) {
+        console.error("Failed to update profile picture:", err);
+        alert("Failed to update profile picture");
+      } finally {
+        setSavingProfile(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleExportCSV = async () => {
+    setExporting(true);
+    try {
+      const transactions = await getTransactions({ limit: 10000 });
+      const data = transactions.transactions || transactions;
+
+      if (!data || data.length === 0) {
+        alert("No transactions to export");
+        setExporting(false);
+        return;
+      }
+
+      // Create CSV content with proper date formatting
+      const headers = [
+        "Date",
+        "Type",
+        "Amount",
+        "Description",
+        "Person",
+        "Money Source",
+        "Status",
+      ];
+
+      const rows = data.map((t) => {
+        // Properly format the date
+        let formattedDate = "";
+        if (t.dueDate) {
+          const date = new Date(t.dueDate);
+          formattedDate = date.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          });
+        } else if (t.createdAt) {
+          const date = new Date(t.createdAt);
+          formattedDate = date.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          });
+        }
+
+        return [
+          formattedDate,
+          t.type || "",
+          t.amount || 0,
+          t.description || "",
+          t.person || "",
+          t.moneySourceName || t.moneySource?.name || "",
+          t.status || "",
+        ];
+      });
+
+      const csvContent = [
+        headers.join(","),
+        ...rows.map((row) =>
+          row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+        ),
+      ].join("\n");
+
+      // Download file
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `transactions_${
+        new Date().toISOString().split("T")[0]
+      }.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      showSuccessMessage("Transactions exported successfully");
+    } catch (err) {
+      console.error("Export failed:", err);
+      alert("Failed to export transactions");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (err) {
+      console.error("Logout failed:", err);
+      // Even if logout fails on server, clear local state and redirect
+      navigate("/login");
+    }
+  };
+
+  const handleDeleteAllTransactions = async () => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete ALL transactions? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const result = await deleteAllTransactions();
+      showSuccessMessage(`Successfully deleted ${result.count} transactions`);
+    } catch (err) {
+      console.error("Delete failed:", err);
+      alert("Failed to delete transactions");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const getInitials = (name, email) => {
+    if (name) return name.charAt(0).toUpperCase();
+    if (email) return email.charAt(0).toUpperCase();
+    return "?";
+  };
+
+  if (loading) {
+    return (
+      <>
+        <PageHeader>
+          <PageTitle>Settings</PageTitle>
+          <PageSubtitle>Manage your account and preferences</PageSubtitle>
+        </PageHeader>
+        <SettingsContainer>
+          <Section>Loading...</Section>
+        </SettingsContainer>
+      </>
+    );
+  }
 
   return (
     <>
       <PageHeader>
         <PageTitle>Settings</PageTitle>
-        <PageSubtitle>
-          Manage your account preferences and application settings
-        </PageSubtitle>
+        <PageSubtitle>Manage your account and preferences</PageSubtitle>
       </PageHeader>
+
+      {showSuccess && <SuccessMessage>✓ {showSuccess}</SuccessMessage>}
 
       <SettingsContainer>
         <Section>
-          <SectionTitle>Notifications</SectionTitle>
+          <SectionTitle>Profile</SectionTitle>
+          <SectionSubtitle>Manage your personal information</SectionSubtitle>
+          <ProfileHeader>
+            <Avatar
+              $hasImage={!!user?.profilePic}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {user?.profilePic ? (
+                <img src={user.profilePic} alt="Profile" />
+              ) : (
+                getInitials(user?.name, user?.email)
+              )}
+              <AvatarOverlay>📷</AvatarOverlay>
+            </Avatar>
+            <HiddenInput
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleProfilePicChange}
+            />
+            <ProfileInfo>
+              {isEditingName ? (
+                <EditForm>
+                  <Input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Enter your name"
+                    autoFocus
+                  />
+                  <ButtonGroup>
+                    <PrimaryButton
+                      onClick={handleSaveName}
+                      disabled={savingProfile}
+                    >
+                      {savingProfile ? "Saving..." : "Save"}
+                    </PrimaryButton>
+                    <Button
+                      onClick={() => {
+                        setIsEditingName(false);
+                        setEditName(user?.name || user?.username || "");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </ButtonGroup>
+                </EditForm>
+              ) : (
+                <>
+                  <ProfileName>
+                    {user?.name || user?.username || "User"}
+                    <EditButton onClick={() => setIsEditingName(true)}>
+                      Edit
+                    </EditButton>
+                  </ProfileName>
+                  <ProfileEmail>{user?.email || "No email"}</ProfileEmail>
+                </>
+              )}
+            </ProfileInfo>
+          </ProfileHeader>
           <SettingRow>
             <SettingInfo>
-              <SettingLabel>Push Notifications</SettingLabel>
+              <SettingLabel>Member Since</SettingLabel>
               <SettingDescription>
-                Receive notifications about your transactions
+                Your account creation date
               </SettingDescription>
             </SettingInfo>
-            <Toggle>
-              <ToggleInput
-                type="checkbox"
-                checked={settings.notifications}
-                onChange={() => handleToggle("notifications")}
-              />
-              <ToggleSlider />
-            </Toggle>
-          </SettingRow>
-          <SettingRow>
-            <SettingInfo>
-              <SettingLabel>Email Reminders</SettingLabel>
-              <SettingDescription>
-                Get email reminders for upcoming payments
-              </SettingDescription>
-            </SettingInfo>
-            <Toggle>
-              <ToggleInput
-                type="checkbox"
-                checked={settings.emailReminders}
-                onChange={() => handleToggle("emailReminders")}
-              />
-              <ToggleSlider />
-            </Toggle>
-          </SettingRow>
-          <SettingRow>
-            <SettingInfo>
-              <SettingLabel>Due Date Alerts</SettingLabel>
-              <SettingDescription>
-                Alert me 2 days before payment due dates
-              </SettingDescription>
-            </SettingInfo>
-            <Toggle>
-              <ToggleInput
-                type="checkbox"
-                checked={settings.dueDateAlerts}
-                onChange={() => handleToggle("dueDateAlerts")}
-              />
-              <ToggleSlider />
-            </Toggle>
+            <SettingDescription>
+              {user?.createdAt
+                ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : "—"}
+            </SettingDescription>
           </SettingRow>
         </Section>
 
         <Section>
-          <SectionTitle>Appearance</SectionTitle>
-          <SettingRow>
-            <SettingInfo>
-              <SettingLabel>Dark Mode</SettingLabel>
-              <SettingDescription>
-                Enable dark theme for better visibility at night
-              </SettingDescription>
-            </SettingInfo>
-            <Toggle>
-              <ToggleInput
-                type="checkbox"
-                checked={settings.darkMode}
-                onChange={() => handleToggle("darkMode")}
-              />
-              <ToggleSlider />
-            </Toggle>
-          </SettingRow>
+          <SectionTitle>Preferences</SectionTitle>
+          <SectionSubtitle>Customize your app experience</SectionSubtitle>
           <SettingRow>
             <SettingInfo>
               <SettingLabel>Currency</SettingLabel>
               <SettingDescription>
-                Choose your preferred currency format
+                Choose your preferred currency for displaying amounts
               </SettingDescription>
             </SettingInfo>
             <Select
-              value={settings.currency}
-              onChange={(e) => handleSelect("currency", e.target.value)}
+              value={user?.currency || "INR"}
+              onChange={(e) => handleCurrencyChange(e.target.value)}
+              disabled={savingCurrency}
             >
               <option value="INR">₹ INR - Indian Rupee</option>
               <option value="USD">$ USD - US Dollar</option>
@@ -343,106 +651,46 @@ export default function SettingsPage() {
               <option value="GBP">£ GBP - British Pound</option>
             </Select>
           </SettingRow>
-          <SettingRow>
-            <SettingInfo>
-              <SettingLabel>Language</SettingLabel>
-              <SettingDescription>
-                Select your preferred language
-              </SettingDescription>
-            </SettingInfo>
-            <Select
-              value={settings.language}
-              onChange={(e) => handleSelect("language", e.target.value)}
-            >
-              <option value="en">English</option>
-              <option value="hi">हिंदी (Hindi)</option>
-              <option value="es">Español</option>
-              <option value="fr">Français</option>
-            </Select>
-          </SettingRow>
         </Section>
 
         <Section>
-          <SectionTitle>Data & Privacy</SectionTitle>
+          <SectionTitle>Data Export</SectionTitle>
+          <SectionSubtitle>Download your transaction data</SectionSubtitle>
           <SettingRow>
             <SettingInfo>
-              <SettingLabel>Auto Backup</SettingLabel>
+              <SettingLabel>Export Transactions</SettingLabel>
               <SettingDescription>
-                Automatically backup your data every week
+                Download all your transactions as a CSV file
               </SettingDescription>
             </SettingInfo>
-            <Toggle>
-              <ToggleInput
-                type="checkbox"
-                checked={settings.autoBackup}
-                onChange={() => handleToggle("autoBackup")}
-              />
-              <ToggleSlider />
-            </Toggle>
+            <PrimaryButton onClick={handleExportCSV} disabled={exporting}>
+              {exporting ? "Exporting..." : "📥 Export CSV"}
+            </PrimaryButton>
           </SettingRow>
-          <SettingRow>
-            <SettingInfo>
-              <SettingLabel>Export Data</SettingLabel>
-              <SettingDescription>
-                Download all your transaction data
-              </SettingDescription>
-            </SettingInfo>
-            <Button>Export CSV</Button>
-          </SettingRow>
-        </Section>
-
-        <Section>
-          <SectionTitle>Account</SectionTitle>
-          <FormGroup>
-            <Label>Change Password</Label>
-            <Input type="password" placeholder="Current password" />
-          </FormGroup>
-          <FormGroup>
-            <Input type="password" placeholder="New password" />
-          </FormGroup>
-          <FormGroup>
-            <Input type="password" placeholder="Confirm new password" />
-          </FormGroup>
-          <ButtonGroup>
-            <PrimaryButton>Update Password</PrimaryButton>
-          </ButtonGroup>
           <InfoBox>
             <InfoText>
-              💡 Use a strong password with at least 8 characters, including
-              uppercase, lowercase, numbers, and symbols.
+              📊 Your exported file will include date, type, amount,
+              description, person, money source, and status for each
+              transaction.
             </InfoText>
           </InfoBox>
         </Section>
 
         <Section>
-          <SectionTitle>Danger Zone</SectionTitle>
-          <SettingRow>
-            <SettingInfo>
-              <SettingLabel>Delete Account</SettingLabel>
-              <SettingDescription>
-                Permanently delete your account and all data
-              </SettingDescription>
-            </SettingInfo>
+          <SectionTitle>Account</SectionTitle>
+          <SectionSubtitle>Manage your account details</SectionSubtitle>
+          <AccountActions>
+            <DangerOutlineButton onClick={handleLogout}>
+              ↪ Logout
+            </DangerOutlineButton>
             <DangerButton
-              onClick={() => {
-                if (
-                  window.confirm("Are you sure? This action cannot be undone.")
-                ) {
-                  alert("Account deletion would be processed here");
-                }
-              }}
+              onClick={handleDeleteAllTransactions}
+              disabled={deleting}
             >
-              Delete Account
+              {deleting ? "Deleting..." : "🗑 Delete All Transactions"}
             </DangerButton>
-          </SettingRow>
+          </AccountActions>
         </Section>
-
-        <ButtonGroup style={{ marginTop: "32px" }}>
-          <PrimaryButton onClick={() => alert("Settings saved!")}>
-            Save Changes
-          </PrimaryButton>
-          <Button>Reset to Defaults</Button>
-        </ButtonGroup>
       </SettingsContainer>
     </>
   );

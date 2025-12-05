@@ -12,6 +12,17 @@ export const login = (data) => API.post("/auth/login", data);
 export const getUser = () => API.get("/auth/me");
 export const logout = () => API.post("/auth/logout");
 
+// User Profile APIs
+export const updateProfile = async (data) => {
+  const res = await API.put("/auth/profile", data);
+  return res.data;
+};
+
+export const updateCurrency = async (currency) => {
+  const res = await API.put("/auth/currency", { currency });
+  return res.data;
+};
+
 // Transaction APIs - return .data directly for easier consumption
 export const getTransactions = async (params) => {
   const res = await API.get("/transactions", { params });
@@ -35,6 +46,11 @@ export const updateTransaction = async (id, data) => {
 
 export const deleteTransaction = async (id) => {
   const res = await API.delete(`/transactions/${id}`);
+  return res.data;
+};
+
+export const deleteAllTransactions = async () => {
+  const res = await API.delete("/transactions/all");
   return res.data;
 };
 

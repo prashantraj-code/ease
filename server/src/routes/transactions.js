@@ -101,6 +101,25 @@ router.post("/seed", requireAuth, async (req, res) => {
   }
 });
 
+// Delete ALL transactions for current user
+router.delete("/all", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const result = await prisma.transaction.deleteMany({
+      where: { userId },
+    });
+
+    res.json({
+      message: `Successfully deleted ${result.count} transactions`,
+      count: result.count,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to delete transactions" });
+  }
+});
+
 // Get transaction stats (totals)
 router.get("/stats", requireAuth, async (req, res) => {
   try {
@@ -217,19 +236,39 @@ router.get("/", requireAuth, async (req, res) => {
       orderBy = [{ dueDate: "desc" }, { createdAt: "desc" }];
     }
 
-    // Get transactions
+    // Get transactions with money source details
     const transactions = await prisma.transaction.findMany({
       where,
       orderBy,
       skip,
       take,
+      include: {
+        user: false,
+      },
     });
+
+    // Fetch money sources for the user to map names
+    const moneySources = await prisma.moneySource.findMany({
+      where: { userId: req.user.id },
+      select: { id: true, name: true },
+    });
+    const moneySourceMap = Object.fromEntries(
+      moneySources.map((ms) => [ms.id, ms.name])
+    );
+
+    // Add money source names to transactions
+    const transactionsWithSourceNames = transactions.map((t) => ({
+      ...t,
+      moneySourceName: t.moneySourceId
+        ? moneySourceMap[t.moneySourceId] || ""
+        : "",
+    }));
 
     // Get total count for pagination
     const total = await prisma.transaction.count({ where });
 
     res.json({
-      transactions,
+      transactions: transactionsWithSourceNames,
       pagination: {
         total,
         page: parseInt(page),

@@ -237,8 +237,13 @@ export default function App() {
       await logout();
       setUser(null);
     } catch {
-      setError("Logout failed. Try again.");
+      // Even if logout fails on server, clear local state
+      setUser(null);
     }
+  };
+
+  const handleUserUpdate = (updatedUser) => {
+    setUser(updatedUser);
   };
 
   if (loading) {
@@ -386,7 +391,7 @@ export default function App() {
             path="/settings"
             element={
               <DashboardLayout user={user} onLogout={handleLogout}>
-                <SettingsPage />
+                <SettingsPage onUserUpdate={handleUserUpdate} />
               </DashboardLayout>
             }
           />

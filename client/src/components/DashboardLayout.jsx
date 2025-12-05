@@ -115,7 +115,7 @@ const Avatar = styled.div`
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: #10b981;
+  background: ${(props) => (props.$hasImage ? "transparent" : "#10b981")};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -123,6 +123,13 @@ const Avatar = styled.div`
   font-weight: 600;
   font-size: 16px;
   font-family: "Futura", sans-serif;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const UserDetails = styled.div``;
@@ -216,9 +223,15 @@ export default function DashboardLayout({ user, onLogout, children }) {
         <TopBar>
           <UserSection>
             <UserInfo>
-              <Avatar>{user.username.charAt(0).toUpperCase()}</Avatar>
+              <Avatar $hasImage={!!user.profilePic}>
+                {user.profilePic ? (
+                  <img src={user.profilePic} alt="Profile" />
+                ) : (
+                  (user.name || user.username || "?").charAt(0).toUpperCase()
+                )}
+              </Avatar>
               <UserDetails>
-                <UserName>{user.username}</UserName>
+                <UserName>{user.name || user.username}</UserName>
                 <UserEmail>
                   {user.email || `${user.username}@email.com`}
                 </UserEmail>

@@ -13,7 +13,11 @@ model User {
   username     String        @unique
   email        String        @unique
   password     String
+  name         String?
+  profilePic   String?
+  currency     String        @default("INR")
   createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @default(now()) @updatedAt
   moneySources MoneySource[]
   people       Person[]
   transactions Transaction[]
