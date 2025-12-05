@@ -45,6 +45,15 @@ const PageHeader = styled.div`
   margin-bottom: 32px;
   flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const PageHeaderLeft = styled.div``;
@@ -55,6 +64,14 @@ const PageTitle = styled.h1`
   color: #1f2937;
   margin: 0 0 8px 0;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 26px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 22px;
+  }
 `;
 
 const PageSubtitle = styled.p`
@@ -62,6 +79,10 @@ const PageSubtitle = styled.p`
   color: #6b7280;
   margin: 0;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
 `;
 
 const TopBar = styled.div`
@@ -71,6 +92,11 @@ const TopBar = styled.div`
   margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const TotalBalanceSection = styled.div`
@@ -90,12 +116,21 @@ const TotalAmount = styled.div`
   font-weight: 700;
   color: ${(props) => props.color || "#10b981"};
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 26px;
+  }
 `;
 
 const SearchWrapper = styled.div`
   position: relative;
   flex: 1;
   max-width: 400px;
+
+  @media (max-width: 600px) {
+    max-width: none;
+  }
+
   &:before {
     content: "🔍";
     position: absolute;
@@ -141,6 +176,11 @@ const Button = styled.button`
     opacity: 0.6;
     cursor: not-allowed;
   }
+
+  @media (max-width: 480px) {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
 `;
 
 const PrimaryButton = styled(Button)`
@@ -153,6 +193,10 @@ const PrimaryButton = styled(Button)`
   gap: 8px;
   &:hover:not(:disabled) {
     background: #059669;
+  }
+
+  @media (max-width: 600px) {
+    width: 100%;
   }
 `;
 
@@ -169,6 +213,11 @@ const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 `;
 
 const SourceCard = styled.div`
@@ -181,6 +230,10 @@ const SourceCard = styled.div`
   flex-direction: column;
   &:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  @media (max-width: 480px) {
+    padding: 16px;
   }
 `;
 

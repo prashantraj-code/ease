@@ -19,6 +19,12 @@ const Overlay = styled.div`
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+
+  @media (max-width: 480px) {
+    padding: 12px;
+    align-items: flex-start;
+    overflow-y: auto;
+  }
 `;
 
 const Modal = styled.div`
@@ -30,10 +36,21 @@ const Modal = styled.div`
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+
+  @media (max-width: 480px) {
+    padding: 20px;
+    border-radius: 12px;
+    max-height: none;
+    margin: 20px 0;
+  }
 `;
 
 const Header = styled.div`
   margin-bottom: 24px;
+
+  @media (max-width: 480px) {
+    margin-bottom: 16px;
+  }
 `;
 
 const Title = styled.h2`
@@ -42,6 +59,10 @@ const Title = styled.h2`
   color: #1f2937;
   margin: 0 0 8px 0;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
 `;
 
 const Subtitle = styled.p`
@@ -49,12 +70,20 @@ const Subtitle = styled.p`
   color: #6b7280;
   margin: 0;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 20px;
+
+  @media (max-width: 480px) {
+    gap: 16px;
+  }
 `;
 
 const InputGroup = styled.div`
@@ -169,6 +198,11 @@ const TypeButton = styled.button`
       return props.isGiven ? "#059669" : "#b91c1c";
     }};
   }
+
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
 `;
 
 const ButtonGroup = styled.div`
@@ -176,6 +210,11 @@ const ButtonGroup = styled.div`
   gap: 12px;
   margin-top: 8px;
   justify-content: flex-end;
+
+  @media (max-width: 480px) {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
 `;
 
 const Button = styled.button`
@@ -187,6 +226,11 @@ const Button = styled.button`
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 480px) {
+    width: 100%;
+    padding: 14px 20px;
+  }
 `;
 
 const SubmitButton = styled(Button)`

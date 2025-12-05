@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styled from "styled-components";
 
@@ -5,6 +6,18 @@ const AppContainer = styled.div`
   display: flex;
   min-height: 100vh;
   background: #f5f5f5;
+`;
+
+const Overlay = styled.div`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: ${(props) => (props.$isOpen ? "block" : "none")};
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+  }
 `;
 
 const Sidebar = styled.div`
@@ -17,6 +30,13 @@ const Sidebar = styled.div`
   top: 0;
   display: flex;
   flex-direction: column;
+  z-index: 50;
+  transition: transform 0.3s ease;
+
+  @media (max-width: 768px) {
+    transform: ${(props) =>
+      props.$isOpen ? "translateX(0)" : "translateX(-100%)"};
+  }
 `;
 
 const Logo = styled.div`
@@ -31,6 +51,26 @@ const LogoText = styled.div`
   font-weight: 800;
   color: #10b981;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 36px;
+  }
+`;
+
+const CloseButton = styled.button`
+  display: none;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6b7280;
+
+  @media (max-width: 768px) {
+    display: block;
+  }
 `;
 
 const MenuLabel = styled.div`
@@ -89,19 +129,51 @@ const MainContent = styled.div`
   flex: 1;
   padding: 32px 40px;
   max-width: calc(100vw - 240px);
+  min-height: 100vh;
+
+  @media (max-width: 768px) {
+    margin-left: 0;
+    max-width: 100vw;
+    padding: 16px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
+  }
 `;
 
 const TopBar = styled.div`
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 20px;
+  }
+`;
+
+const HamburgerButton = styled.button`
+  display: none;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 20px;
+
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 `;
 
 const UserSection = styled.div`
   display: flex;
   align-items: center;
   gap: 16px;
+  margin-left: auto;
 `;
 
 const UserInfo = styled.div`
@@ -124,15 +196,26 @@ const Avatar = styled.div`
   font-size: 16px;
   font-family: "Futura", sans-serif;
   overflow: hidden;
+  flex-shrink: 0;
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
+
+  @media (max-width: 480px) {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
 `;
 
-const UserDetails = styled.div``;
+const UserDetails = styled.div`
+  @media (max-width: 480px) {
+    display: none;
+  }
+`;
 
 const UserName = styled.div`
   font-size: 15px;
@@ -148,14 +231,30 @@ const UserEmail = styled.div`
 `;
 
 export default function DashboardLayout({ user, onLogout, children }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   const isActive = (path) => location.pathname === path;
 
+  const handleNavClick = (path) => {
+    navigate(path);
+    setSidebarOpen(false);
+  };
+
+  const handleLogout = () => {
+    setSidebarOpen(false);
+    onLogout();
+  };
+
+  if (!user) return null;
+
   return (
     <AppContainer>
-      <Sidebar>
+      <Overlay $isOpen={sidebarOpen} onClick={() => setSidebarOpen(false)} />
+
+      <Sidebar $isOpen={sidebarOpen}>
+        <CloseButton onClick={() => setSidebarOpen(false)}>✕</CloseButton>
         <Logo>
           <LogoText>Ease</LogoText>
         </Logo>
@@ -164,35 +263,35 @@ export default function DashboardLayout({ user, onLogout, children }) {
         <NavSection>
           <NavItem
             active={isActive("/dashboard")}
-            onClick={() => navigate("/dashboard")}
+            onClick={() => handleNavClick("/dashboard")}
           >
             <NavIcon>📊</NavIcon>
             Dashboard
           </NavItem>
           <NavItem
             active={isActive("/transactions")}
-            onClick={() => navigate("/transactions")}
+            onClick={() => handleNavClick("/transactions")}
           >
             <NavIcon>💰</NavIcon>
             All transactions
           </NavItem>
           <NavItem
             active={isActive("/people")}
-            onClick={() => navigate("/people")}
+            onClick={() => handleNavClick("/people")}
           >
             <NavIcon>👥</NavIcon>
             People
           </NavItem>
           <NavItem
             active={isActive("/sources")}
-            onClick={() => navigate("/sources")}
+            onClick={() => handleNavClick("/sources")}
           >
             <NavIcon>🏦</NavIcon>
             Money sources
           </NavItem>
           <NavItem
             active={isActive("/notes")}
-            onClick={() => navigate("/notes")}
+            onClick={() => handleNavClick("/notes")}
           >
             <NavIcon>📝</NavIcon>
             Notes
@@ -203,16 +302,19 @@ export default function DashboardLayout({ user, onLogout, children }) {
           <MenuLabel>GENERAL</MenuLabel>
           <NavItem
             active={isActive("/settings")}
-            onClick={() => navigate("/settings")}
+            onClick={() => handleNavClick("/settings")}
           >
             <NavIcon>⚙️</NavIcon>
             Settings
           </NavItem>
-          <NavItem active={isActive("/help")} onClick={() => navigate("/help")}>
+          <NavItem
+            active={isActive("/help")}
+            onClick={() => handleNavClick("/help")}
+          >
             <NavIcon>❓</NavIcon>
             Help
           </NavItem>
-          <NavItem onClick={onLogout}>
+          <NavItem onClick={handleLogout}>
             <NavIcon>→</NavIcon>
             Log out
           </NavItem>
@@ -221,20 +323,21 @@ export default function DashboardLayout({ user, onLogout, children }) {
 
       <MainContent>
         <TopBar>
+          <HamburgerButton onClick={() => setSidebarOpen(true)}>
+            ☰
+          </HamburgerButton>
           <UserSection>
             <UserInfo>
-              <Avatar $hasImage={!!user.profilePic}>
-                {user.profilePic ? (
+              <Avatar $hasImage={!!user?.profilePic}>
+                {user?.profilePic ? (
                   <img src={user.profilePic} alt="Profile" />
                 ) : (
-                  (user.name || user.username || "?").charAt(0).toUpperCase()
+                  (user?.name || user?.username || "U").charAt(0).toUpperCase()
                 )}
               </Avatar>
               <UserDetails>
-                <UserName>{user.name || user.username}</UserName>
-                <UserEmail>
-                  {user.email || `${user.username}@email.com`}
-                </UserEmail>
+                <UserName>{user?.name || user?.username || "User"}</UserName>
+                <UserEmail>{user?.email || ""}</UserEmail>
               </UserDetails>
             </UserInfo>
           </UserSection>

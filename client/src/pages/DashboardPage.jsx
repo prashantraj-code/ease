@@ -10,6 +10,10 @@ import TransactionForm from "../components/TransactionForm";
 
 const PageHeader = styled.div`
   margin-bottom: 32px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 20px;
+  }
 `;
 
 const PageTitle = styled.h1`
@@ -18,6 +22,14 @@ const PageTitle = styled.h1`
   color: #1f2937;
   margin: 0 0 8px 0;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 28px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 24px;
+  }
 `;
 
 const PageSubtitle = styled.p`
@@ -25,6 +37,10 @@ const PageSubtitle = styled.p`
   color: #6b7280;
   margin: 0;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
 `;
 
 const ActionButtons = styled.div`
@@ -33,6 +49,10 @@ const ActionButtons = styled.div`
   margin-bottom: 24px;
   align-items: center;
   flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    gap: 8px;
+  }
 `;
 
 const Button = styled.button`
@@ -49,6 +69,11 @@ const Button = styled.button`
 
   &:hover {
     background: #f9fafb;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px 18px;
+    font-size: 14px;
   }
 `;
 
@@ -74,6 +99,12 @@ const CardsGrid = styled.div`
   @media (max-width: 1400px) {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
 `;
 
 const StatCard = styled.div`
@@ -82,6 +113,11 @@ const StatCard = styled.div`
   padding: 24px;
   position: relative;
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    padding: 20px;
+    border-radius: 12px;
+  }
 `;
 
 const StatHeader = styled.div`
@@ -97,6 +133,11 @@ const StatLabel = styled.div`
   color: ${(props) => props.color || "#6b7280"};
   margin-bottom: 12px;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
 `;
 
 const StatValue = styled.div`
@@ -106,6 +147,14 @@ const StatValue = styled.div`
   line-height: 1;
   margin-bottom: 8px;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 32px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 28px;
+  }
 `;
 
 const StatChange = styled.div`
@@ -132,12 +181,21 @@ const ContentGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
   gap: 24px;
+
+  @media (max-width: 768px) {
+    gap: 16px;
+  }
 `;
 
 const Card = styled.div`
   background: white;
   border-radius: 16px;
   padding: 24px;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-radius: 12px;
+  }
 `;
 
 const CardTitle = styled.h3`
@@ -146,6 +204,11 @@ const CardTitle = styled.h3`
   color: #1f2937;
   margin: 0 0 20px 0;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 18px;
+    margin: 0 0 16px 0;
+  }
 `;
 
 const PeopleList = styled.div`
@@ -166,12 +229,20 @@ const PersonCard = styled.div`
   &:hover {
     background: #f3f4f6;
   }
+
+  @media (max-width: 768px) {
+    padding: 12px;
+  }
 `;
 
 const PersonInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+
+  @media (max-width: 480px) {
+    gap: 8px;
+  }
 `;
 
 const PersonAvatar = styled.div`
@@ -186,21 +257,38 @@ const PersonAvatar = styled.div`
   font-weight: 600;
   font-size: 17px;
   font-family: "Futura", sans-serif;
+  flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
 `;
 
-const PersonDetails = styled.div``;
+const PersonDetails = styled.div`
+  min-width: 0;
+`;
 
 const PersonName = styled.div`
   font-size: 16px;
   font-weight: 600;
   color: #1f2937;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
 `;
 
 const PersonSubtext = styled.div`
   font-size: 14px;
   color: #6b7280;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+  }
 `;
 
 const AmountBadge = styled.div`
@@ -211,6 +299,12 @@ const AmountBadge = styled.div`
   background: ${(props) => (props.positive ? "#d1fae5" : "#fee2e2")};
   color: ${(props) => (props.positive ? "#059669" : "#dc2626")};
   font-family: "Futura", sans-serif;
+  flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
 `;
 
 const IconButton = styled.button`

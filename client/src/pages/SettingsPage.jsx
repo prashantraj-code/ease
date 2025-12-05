@@ -12,6 +12,10 @@ import { useNavigate } from "react-router-dom";
 
 const PageHeader = styled.div`
   margin-bottom: 32px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 20px;
+  }
 `;
 
 const PageTitle = styled.h1`
@@ -20,6 +24,14 @@ const PageTitle = styled.h1`
   color: #111827;
   margin: 0;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 24px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
 `;
 
 const PageSubtitle = styled.p`
@@ -27,10 +39,18 @@ const PageSubtitle = styled.p`
   color: #6b7280;
   margin: 8px 0 0;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+  }
 `;
 
 const SettingsContainer = styled.div`
   max-width: 640px;
+
+  @media (max-width: 768px) {
+    max-width: none;
+  }
 `;
 
 const Section = styled.div`
@@ -39,6 +59,11 @@ const Section = styled.div`
   padding: 24px;
   margin-bottom: 24px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 480px) {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -54,6 +79,10 @@ const SectionSubtitle = styled.p`
   color: #6b7280;
   margin: 0 0 20px;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 480px) {
+    margin: 0 0 16px;
+  }
 `;
 
 const SettingRow = styled.div`
@@ -62,6 +91,7 @@ const SettingRow = styled.div`
   align-items: center;
   padding: 12px 0;
   border-bottom: 1px solid #f3f4f6;
+  gap: 12px;
 
   &:last-child {
     border-bottom: none;
@@ -70,6 +100,12 @@ const SettingRow = styled.div`
 
   &:first-child {
     padding-top: 0;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 `;
 
@@ -105,6 +141,10 @@ const Select = styled.select`
   &:focus {
     border-color: #10b981;
   }
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
 `;
 
 const Button = styled.button`
@@ -129,6 +169,13 @@ const Button = styled.button`
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px 14px;
+    font-size: 13px;
+    width: 100%;
+    justify-content: center;
   }
 `;
 
@@ -211,6 +258,13 @@ const Avatar = styled.div`
   position: relative;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+  }
 
   &:hover {
     opacity: 0.9;
@@ -238,6 +292,10 @@ const AvatarOverlay = styled.div`
   ${Avatar}:hover & {
     opacity: 1;
   }
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+  }
 `;
 
 const ProfileHeader = styled.div`
@@ -247,10 +305,17 @@ const ProfileHeader = styled.div`
   margin-bottom: 24px;
   padding-bottom: 24px;
   border-bottom: 1px solid #f3f4f6;
+
+  @media (max-width: 480px) {
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+  }
 `;
 
 const ProfileInfo = styled.div`
   flex: 1;
+  min-width: 0;
 `;
 
 const ProfileName = styled.div`
@@ -259,12 +324,21 @@ const ProfileName = styled.div`
   color: #111827;
   font-family: "Futura", sans-serif;
   margin-bottom: 4px;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 `;
 
 const ProfileEmail = styled.div`
   font-size: 14px;
   color: #6b7280;
   font-family: "Futura", sans-serif;
+  word-break: break-word;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 `;
 
 const EditButton = styled.button`

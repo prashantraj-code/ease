@@ -2,6 +2,14 @@ import styled from "styled-components";
 
 const Container = styled.div`
   padding: 20px;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
+  }
 `;
 
 const Title = styled.h2`
@@ -10,6 +18,14 @@ const Title = styled.h2`
   color: #1f2937;
   margin-bottom: 16px;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 22px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
 `;
 
 const Description = styled.p`
@@ -17,6 +33,10 @@ const Description = styled.p`
   color: #6b7280;
   margin-bottom: 20px;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
 `;
 
 const HelpSection = styled.div`
@@ -25,6 +45,11 @@ const HelpSection = styled.div`
   border-radius: 12px;
   margin-bottom: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 480px) {
+    padding: 16px;
+    margin-bottom: 12px;
+  }
 `;
 
 const SectionTitle = styled.h3`
@@ -33,6 +58,10 @@ const SectionTitle = styled.h3`
   color: #10b981;
   margin-bottom: 8px;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 `;
 
 const SectionText = styled.p`
@@ -40,6 +69,10 @@ const SectionText = styled.p`
   color: #6b7280;
   line-height: 1.6;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 `;
 
 export default function HelpPage() {

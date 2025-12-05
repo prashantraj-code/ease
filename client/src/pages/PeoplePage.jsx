@@ -46,6 +46,10 @@ const Toast = styled.div`
 
 const PageHeader = styled.div`
   margin-bottom: 32px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 20px;
+  }
 `;
 
 const PageTitle = styled.h1`
@@ -54,6 +58,14 @@ const PageTitle = styled.h1`
   color: #1f2937;
   margin: 0 0 8px 0;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 26px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 22px;
+  }
 `;
 
 const PageSubtitle = styled.p`
@@ -61,6 +73,10 @@ const PageSubtitle = styled.p`
   color: #6b7280;
   margin: 0;
   font-family: "Futura", sans-serif;
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
 `;
 
 const TopBar = styled.div`
@@ -70,12 +86,21 @@ const TopBar = styled.div`
   margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 16px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const SearchWrapper = styled.div`
   position: relative;
   flex: 1;
   max-width: 400px;
+
+  @media (max-width: 600px) {
+    max-width: none;
+  }
 
   &:before {
     content: "🔍";
@@ -126,6 +151,11 @@ const Button = styled.button`
     opacity: 0.6;
     cursor: not-allowed;
   }
+
+  @media (max-width: 480px) {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
 `;
 
 const PrimaryButton = styled(Button)`
@@ -139,6 +169,10 @@ const PrimaryButton = styled(Button)`
 
   &:hover:not(:disabled) {
     background: #059669;
+  }
+
+  @media (max-width: 600px) {
+    width: 100%;
   }
 `;
 
@@ -155,6 +189,11 @@ const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 `;
 
 const PersonCard = styled.div`
@@ -168,6 +207,10 @@ const PersonCard = styled.div`
 
   &:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  @media (max-width: 480px) {
+    padding: 16px;
   }
 `;
 
@@ -315,7 +358,7 @@ const PopoverValue = styled.div`
   a {
     color: #3b82f6;
     text-decoration: none;
-    
+
     &:hover {
       text-decoration: underline;
     }
@@ -542,7 +585,7 @@ export default function PeoplePage() {
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
   const [toast, setToast] = useState(null);
-  
+
   // Form state (controlled inputs to fix defaultValue issue)
   const [formData, setFormData] = useState({
     name: "",
@@ -570,7 +613,7 @@ export default function PeoplePage() {
         setActivePopover(null);
       }
     };
-    
+
     if (activePopover) {
       document.addEventListener("click", handleClickOutside);
       document.addEventListener("keydown", handleEscape);
@@ -649,7 +692,7 @@ export default function PeoplePage() {
 
   const validateForm = () => {
     const trimmedName = formData.name.trim();
-    
+
     if (!trimmedName) {
       setFormError("Name is required");
       return false;
@@ -709,7 +752,8 @@ export default function PeoplePage() {
     } catch (error) {
       console.error("Error saving person:", error);
       setFormError(
-        error.response?.data?.message || "Failed to save person. Please try again."
+        error.response?.data?.message ||
+          "Failed to save person. Please try again."
       );
     } finally {
       setFormLoading(false);
@@ -724,7 +768,8 @@ export default function PeoplePage() {
         fetchPeople();
       } catch (error) {
         console.error("Error deleting person:", error);
-        const errorMessage = error.response?.data?.message || "Failed to delete person";
+        const errorMessage =
+          error.response?.data?.message || "Failed to delete person";
         showToast(errorMessage, "error");
       }
     }
@@ -746,14 +791,18 @@ export default function PeoplePage() {
       "#ec4899",
     ];
     // Use sum of char codes for better distribution
-    const charSum = name.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    const charSum = name
+      .split("")
+      .reduce((sum, char) => sum + char.charCodeAt(0), 0);
     return colors[charSum % colors.length];
   };
 
   if (loading) {
     return (
       <EmptyState>
-        <Spinner style={{ width: 32, height: 32, borderWidth: 3, color: "#10b981" }} />
+        <Spinner
+          style={{ width: 32, height: 32, borderWidth: 3, color: "#10b981" }}
+        />
         <EmptyText style={{ marginTop: 16 }}>Loading...</EmptyText>
       </EmptyState>
     );
@@ -848,7 +897,7 @@ export default function PeoplePage() {
                       i
                     </InfoButton>
                     {activePopover === person.id && (
-                      <InfoPopover 
+                      <InfoPopover
                         onClick={(e) => e.stopPropagation()}
                         role="dialog"
                         aria-label={`Details for ${person.name}`}
@@ -859,17 +908,25 @@ export default function PeoplePage() {
                             <>
                               {person.phone && (
                                 <PopoverValue>
-                                  📞 <a href={`tel:${person.phone}`}>{person.phone}</a>
+                                  📞{" "}
+                                  <a href={`tel:${person.phone}`}>
+                                    {person.phone}
+                                  </a>
                                 </PopoverValue>
                               )}
                               {person.email && (
                                 <PopoverValue>
-                                  ✉️ <a href={`mailto:${person.email}`}>{person.email}</a>
+                                  ✉️{" "}
+                                  <a href={`mailto:${person.email}`}>
+                                    {person.email}
+                                  </a>
                                 </PopoverValue>
                               )}
                             </>
                           ) : (
-                            <PopoverNoContact>No contact info added</PopoverNoContact>
+                            <PopoverNoContact>
+                              No contact info added
+                            </PopoverNoContact>
                           )}
                         </PopoverSection>
                         <PopoverSection>
@@ -940,9 +997,7 @@ export default function PeoplePage() {
                   >
                     ➕ Add
                   </ActionButton>
-                  <ActionButtonVertical
-                    onClick={() => openModal(person)}
-                  >
+                  <ActionButtonVertical onClick={() => openModal(person)}>
                     <span className="emoji">✏️</span>
                     <span className="text">Edit</span>
                   </ActionButtonVertical>
@@ -967,10 +1022,7 @@ export default function PeoplePage() {
           aria-modal="true"
           aria-labelledby="modal-title"
         >
-          <ModalContent 
-            onClick={(e) => e.stopPropagation()}
-            ref={modalRef}
-          >
+          <ModalContent onClick={(e) => e.stopPropagation()} ref={modalRef}>
             <ModalTitle id="modal-title">
               {editingPerson ? "Edit Person" : "Add Person"}
             </ModalTitle>
@@ -983,7 +1035,9 @@ export default function PeoplePage() {
                   name="name"
                   placeholder="Enter person's name"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   error={formError && formError.includes("name")}
                   required
                 />
@@ -996,7 +1050,9 @@ export default function PeoplePage() {
                   type="tel"
                   placeholder="Enter phone number"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                 />
               </FormGroup>
               <FormGroup>
@@ -1007,7 +1063,9 @@ export default function PeoplePage() {
                   type="email"
                   placeholder="Enter email address"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   error={formError && formError.includes("email")}
                 />
               </FormGroup>
@@ -1018,14 +1076,20 @@ export default function PeoplePage() {
                   name="notes"
                   placeholder="Add any notes about this person"
                   value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, notes: e.target.value })
+                  }
                 />
               </FormGroup>
-              
+
               {formError && <ErrorText>{formError}</ErrorText>}
-              
+
               <ButtonGroup>
-                <Button type="button" onClick={closeModal} disabled={formLoading}>
+                <Button
+                  type="button"
+                  onClick={closeModal}
+                  disabled={formLoading}
+                >
                   Cancel
                 </Button>
                 <PrimaryButton type="submit" disabled={formLoading}>
