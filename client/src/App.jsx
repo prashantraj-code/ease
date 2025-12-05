@@ -187,17 +187,44 @@ export default function App() {
 
   // Check if user is already logged in on page load
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId;
+
     async function fetchUser() {
       try {
         const res = await getUser();
-        setUser(res.data.user);
-      } catch {
-        setUser(null);
-      } finally {
-        setLoading(false);
+        if (isMounted) {
+          if (res.data && res.data.user) {
+            setUser(res.data.user);
+          } else {
+            setUser(null);
+          }
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
+        if (isMounted) {
+          setUser(null);
+          setLoading(false);
+        }
       }
     }
+
+    // Add a timeout to prevent infinite loading
+    timeoutId = setTimeout(() => {
+      if (isMounted) {
+        console.warn("User fetch timed out");
+        setLoading(false);
+        setUser(null);
+      }
+    }, 10000); // 10 second timeout
+
     fetchUser();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleSignup = async (data) => {

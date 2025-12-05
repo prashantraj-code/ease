@@ -107,10 +107,20 @@ router.get("/me", async (req, res) => {
     const token = req.cookies.access_token;
     if (!token) return res.json({ user: null });
 
-    // Decode token to get user id
-    const decoded = JSON.parse(
-      Buffer.from(token.split(".")[1], "base64").toString()
-    );
+    // Use proper JWT verification
+    const { verifyToken } = await import("../utils/jwt.js");
+    let decoded;
+    try {
+      decoded = verifyToken(token);
+    } catch (tokenErr) {
+      // Token is invalid or expired
+      res.clearCookie("access_token", {
+        httpOnly: true,
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+      return res.json({ user: null });
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
@@ -129,6 +139,7 @@ router.get("/me", async (req, res) => {
 
     res.json({ user });
   } catch (err) {
+    console.error("Error in /me:", err);
     res.json({ user: null });
   }
 });

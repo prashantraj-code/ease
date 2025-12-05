@@ -1,10 +1,29 @@
 import axios from "axios";
 
+// Determine API URL based on environment
+const API_URL = import.meta.env.PROD
+  ? "https://ease-27am.onrender.com/api"
+  : "http://localhost:8080/api";
+
 export const API = axios.create({
-  // baseURL: "http://localhost:8080/api",
-  baseURL: "https://ease-27am.onrender.com/api",
+  baseURL: API_URL,
   withCredentials: true, // send cookies
+  timeout: 15000, // 15 second timeout
 });
+
+// Add response interceptor for better error handling
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === "ECONNABORTED") {
+      console.error("Request timed out");
+    }
+    if (!error.response) {
+      console.error("Network error - server may be down");
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Auth APIs
 export const signup = (data) => API.post("/auth/signup", data);

@@ -20,14 +20,27 @@ app.use(helmet());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use(cookieParser());
+// CORS configuration for production
+const allowedOrigins = [
+  "https://ease-kappa.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: [
-      "https://ease-kappa.vercel.app",
-      "http://localhost:5173",
-      process.env.FRONTEND_URL,
-    ].filter(Boolean),
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
@@ -44,7 +57,27 @@ app.get("/", (req, res) => {
 });
 
 app.get("/ping", (req, res) => {
-  res.send("Sever is running .. SUCCESFULLY");
+  res.send("Server is running .. SUCCESSFULLY");
+});
+
+// Health check endpoint for deployment monitoring
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV || "development",
+  });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({ message: "Internal server error" });
+});
+
+// Handle 404
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
 });
 
 const PORT = process.env.PORT || 8080;
